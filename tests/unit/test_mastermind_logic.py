@@ -1,4 +1,4 @@
-from mastermind_logic import MasterMindGame
+from backend.core.game_engine import MasterMindGame
 
 
 def test_evaluate_guess():
