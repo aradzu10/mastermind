@@ -2,7 +2,7 @@
 name = "mastermind"
 version = "2.0.0"
 description = "Mastermind game - Full-stack web application with AI opponents and multiplayer"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
     # Web Framework
     "fastapi>=0.115.0",
@@ -54,6 +54,11 @@ dev = [
 [build-system]
 requires = ["setuptools>=70.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["backend*"]
+exclude = ["tests*", "frontend*", "docker*", "legacy*", "alembic*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

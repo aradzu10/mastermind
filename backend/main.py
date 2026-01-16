@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.api.routes import games
+from backend.api.routes import games, auth
 import os
 
 app = FastAPI(
@@ -22,6 +22,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(games.router)
+app.include_router(auth.router)
 
 
 @app.get("/api/health")

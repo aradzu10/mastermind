@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import GuessInput from './GuessInput';
 import GuessHistory from './GuessHistory';
+import { UserBadge } from '../Auth/UserBadge';
 
 export default function GameBoard() {
   const { game, loading, error, createGame, resetGame } = useGameStore();
@@ -43,7 +44,12 @@ export default function GameBoard() {
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
+        {/* Header with user badge */}
+        <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
+          <UserBadge />
+        </div>
+
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-800">Mastermind</h1>

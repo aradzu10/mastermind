@@ -1,9 +1,11 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from backend.db.database import get_db
-from backend.schemas.game import GameCreate, GameResponse, GameGuess, GameGuessResponse
+from backend.schemas.game import GameCreate, GameGuess, GameGuessResponse, GameResponse
 from backend.services.game_service import GameService
-from typing import List
 
 router = APIRouter(prefix="/api/games", tags=["games"])
 
