@@ -15,9 +15,13 @@ async def create_single_player_game(
     game_data: GameCreate,
     db: AsyncSession = Depends(get_db)
 ):
-    """Create a new single-player game"""
+    """Create a new game (single-player or AI opponent)"""
     service = GameService(db)
-    game = await service.create_game(user_id=None, game_mode=game_data.game_mode)
+    game = await service.create_game(
+        user_id=None, 
+        game_mode=game_data.game_mode,
+        player_secret=game_data.player_secret
+    )
 
     return GameResponse(
         id=game.id,
@@ -27,7 +31,11 @@ async def create_single_player_game(
         game_mode=game.game_mode,
         guesses=[],
         completed_at=game.completed_at,
-        created_at=game.created_at
+        created_at=game.created_at,
+        opponent_type=game.opponent_type,
+        ai_guesses=game.ai_guesses or [] if game.game_mode == "ai" else None,
+        player_secret=None,  # Never expose until game is over
+        ai_won=None
     )
 
 
@@ -44,6 +52,22 @@ async def get_game(
         raise HTTPException(status_code=404, detail="Game not found")
 
     guesses = game.guesses or []
+    ai_guesses = game.ai_guesses or []
+    
+    # Determine if AI won
+    ai_won = None
+    if game.game_mode == "ai" and ai_guesses:
+        last_ai_guess = ai_guesses[-1]
+        if last_ai_guess.get("exact") == 4:
+            ai_won = True
+        elif game.completed_at:
+            ai_won = False  # Game ended but AI didn't win
+    
+    # Only expose secrets if game is over
+    player_secret_exposed = None
+    if game.completed_at and game.player_secret:
+        player_secret_exposed = game.player_secret
+    
     return GameResponse(
         id=game.id,
         user_id=game.user_id,
@@ -52,7 +76,11 @@ async def get_game(
         game_mode=game.game_mode,
         guesses=guesses,
         completed_at=game.completed_at,
-        created_at=game.created_at
+        created_at=game.created_at,
+        opponent_type=game.opponent_type,
+        ai_guesses=ai_guesses if game.game_mode == "ai" else None,
+        player_secret=player_secret_exposed,
+        ai_won=ai_won
     )
 
 

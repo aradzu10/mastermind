@@ -1,11 +1,15 @@
 import { useGameStore } from '../../store/gameStore';
 
-export default function GuessInput() {
+interface GuessInputProps {
+  disabled?: boolean;
+}
+
+export default function GuessInput({ disabled = false }: GuessInputProps) {
   const { currentGuess, setCurrentGuess, makeGuess, game, loading } = useGameStore();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentGuess.length === 4 && !game?.won) {
+    if (currentGuess.length === 4 && !game?.won && !disabled) {
       makeGuess(currentGuess);
     }
   };
@@ -13,6 +17,8 @@ export default function GuessInput() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCurrentGuess(e.target.value);
   };
+
+  const isDisabled = loading || game?.won || !game || disabled;
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-4 items-center">
@@ -23,17 +29,18 @@ export default function GuessInput() {
         placeholder="Enter 4 digits"
         maxLength={4}
         pattern="[0-9]{4}"
-        className="px-4 py-2 text-2xl tracking-widest border-2 border-gray-300 rounded-lg
-                   focus:outline-none focus:border-blue-500 text-center w-48
-                   disabled:bg-gray-100 disabled:cursor-not-allowed"
-        disabled={loading || game?.won || !game}
+        className="px-4 py-3 text-2xl tracking-widest border-2 border-indigo-300 rounded-lg
+                   focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200
+                   text-center w-full font-mono
+                   disabled:bg-gray-100 disabled:cursor-not-allowed transition-all"
+        disabled={isDisabled}
       />
       <button
         type="submit"
-        disabled={currentGuess.length !== 4 || loading || game?.won || !game}
-        className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold
-                   hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed
-                   transition-colors"
+        disabled={currentGuess.length !== 4 || isDisabled}
+        className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold
+                   hover:shadow-lg disabled:bg-gray-300 disabled:cursor-not-allowed
+                   transition-all hover:scale-105 whitespace-nowrap"
       >
         {loading ? 'Submitting...' : 'Guess'}
       </button>

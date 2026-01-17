@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Game, GuessRecord } from '../types/game';
+import type { Game, GuessRecord, GameMode } from '../types/game';
 import { gameApi } from '../services/api';
 
 interface GameState {
@@ -9,7 +9,7 @@ interface GameState {
   currentGuess: string;
 
   setCurrentGuess: (guess: string) => void;
-  createGame: () => Promise<void>;
+  createGame: (mode?: GameMode, playerSecret?: string) => Promise<void>;
   makeGuess: (guess: string) => Promise<void>;
   resetGame: () => void;
 }
@@ -26,10 +26,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  createGame: async () => {
+  createGame: async (mode: GameMode = 'single', playerSecret?: string) => {
     set({ loading: true, error: null });
     try {
-      const game = await gameApi.createGame();
+      const game = await gameApi.createGame(mode, playerSecret);
       set({ game, loading: false, currentGuess: '' });
     } catch (error) {
       set({ error: 'Failed to create game', loading: false });
@@ -50,12 +50,24 @@ export const useGameStore = create<GameState>((set, get) => ({
         wrong_pos: result.wrong_pos,
       };
 
+      // Handle AI move if present
+      const aiGuesses = game.ai_guesses || [];
+      if (result.ai_move) {
+        aiGuesses.push({
+          guess: result.ai_move.ai_guess,
+          exact: result.ai_move.exact,
+          wrong_pos: result.ai_move.wrong_pos,
+        });
+      }
+
       set({
         game: {
           ...game,
           guesses: [...game.guesses, newGuess],
+          ai_guesses: aiGuesses,
           attempts: result.attempts,
           won: result.is_winner,
+          ai_won: result.ai_move?.ai_won,
         },
         currentGuess: '',
         loading: false,

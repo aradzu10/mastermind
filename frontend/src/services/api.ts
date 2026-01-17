@@ -34,8 +34,11 @@ api.interceptors.response.use(
 );
 
 export const gameApi = {
-  createGame: async (gameMode: string = 'single'): Promise<Game> => {
-    const response = await api.post<Game>('/api/games/single', { game_mode: gameMode });
+  createGame: async (gameMode: string = 'single', playerSecret?: string): Promise<Game> => {
+    const response = await api.post<Game>('/api/games/single', { 
+      game_mode: gameMode,
+      player_secret: playerSecret 
+    });
     return response.data;
   },
 

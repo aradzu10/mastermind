@@ -10,7 +10,8 @@ class GuessRecord(BaseModel):
 
 
 class GameCreate(BaseModel):
-    game_mode: str = Field(default="single", pattern="^(single|ai_easy|ai_medium|ai_hard)$")
+    game_mode: str = Field(default="single", pattern="^(single|ai|pvp)$")
+    player_secret: Optional[str] = Field(None, min_length=4, max_length=4, pattern="^[0-9]{4}$")  # For AI mode
 
 
 class GameGuess(BaseModel):
@@ -28,6 +29,10 @@ class GameResponse(BaseModel):
     guesses: List[GuessRecord]
     completed_at: Optional[datetime]
     created_at: datetime
+    opponent_type: str = "none"  # none, ai, human
+    ai_guesses: Optional[List[GuessRecord]] = None  # AI's guesses against player's secret
+    player_secret: Optional[str] = None  # Hidden unless game is over
+    ai_won: Optional[bool] = None  # Did the AI win?
 
 
 class GameGuessResponse(BaseModel):
@@ -38,3 +43,4 @@ class GameGuessResponse(BaseModel):
     is_winner: bool
     attempts: int
     game_over: bool
+    ai_move: Optional[dict] = None  # Contains ai_guess, exact, wrong_pos, ai_won if AI mode
