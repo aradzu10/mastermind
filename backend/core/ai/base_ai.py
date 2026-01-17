@@ -12,6 +12,11 @@ class BaseAI(ABC):
     def name(self) -> str:
         pass
 
+    @property
+    @abstractmethod
+    def elo(self) -> int:
+        pass
+
     @abstractmethod
     def get_next_guess(self) -> str:
         pass

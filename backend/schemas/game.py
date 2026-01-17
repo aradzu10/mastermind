@@ -30,6 +30,7 @@ class GameResponse(BaseModel):
     self_name: str
     self_secret: Optional[str]
     self_guesses: List[GuessRecord]
+    self_elo: Optional[int]
 
     winner_id: Optional[int]
     created_at: datetime
@@ -40,6 +41,7 @@ class GameResponse(BaseModel):
     opponent_name: Optional[str]
     opponent_secret: Optional[str]
     opponent_guesses: Optional[List[GuessRecord]]
+    opponent_elo: Optional[int]
     current_turn: Optional[int]
     status: Optional[str]
     started_at: Optional[datetime]

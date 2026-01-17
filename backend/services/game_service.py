@@ -57,6 +57,7 @@ class GameService:
             player_game.secret,
             ai_player.master_mind_game.secret,
             ai_name=ai_player.name,
+            ai_elo=ai_player.elo,
             ai_difficulty=ai_difficulty,
         )
 
@@ -96,6 +97,11 @@ class GameService:
 
         exact, wrong_pos, is_winner = mastermind.make_guess(guess_str)
         game = await repo.make_guess(game, user, guess_str, exact, wrong_pos, is_winner)
+
+        # Update ELO for PvP games when someone wins
+        if is_winner and game.game_mode == "pvp":
+            await self._update_pvp_elo(game, user)
+
         return game
 
     async def get_opponent_guess(self, game_id: int, user: User) -> Game:
@@ -103,13 +109,28 @@ class GameService:
         if game.game_mode == "single":
             raise ValueError("No opponent in single player game")
 
-        if game.game_mode != "ai":
-            raise ValueError("PvP not implemented")
+        # For PvP, just return current state (opponent makes moves via /guess endpoint)
+        if game.game_mode == "pvp":
+            return game
 
-        history = [GuessRecord(**guess) for guess in game.player2.guesses or []]
-        mastermind = MasterMindGame(player_secret=game.player2.secret, history=history)
-        ai_player = get_ai_player(game.ai_difficulty, mastermind)
+        # For AI, generate AI's next guess
+        if game.game_mode == "ai":
+            history = [GuessRecord(**guess) for guess in game.player2.guesses or []]
+            mastermind = MasterMindGame(player_secret=game.player2.secret, history=history)
+            ai_player = get_ai_player(game.ai_difficulty, mastermind)
 
-        ai_guess = ai_player.get_next_guess()
-        exact, wrong_pos, is_winner = mastermind.make_guess(ai_guess)
-        return await self.pvp_repo.make_guess(game, game.player2, ai_guess, exact, wrong_pos, is_winner)
+            ai_guess = ai_player.get_next_guess()
+            exact, wrong_pos, is_winner = mastermind.make_guess(ai_guess)
+            return await self.pvp_repo.make_guess(game, game.player2, ai_guess, exact, wrong_pos, is_winner)
+
+        raise ValueError(f"Unknown game mode: {game.game_mode}")
+
+    async def _update_pvp_elo(self, game: Game, winner: User) -> None:
+        winner.elo_rating += 20
+
+        loser_id = game.player2.id if game.player1.id == winner.id else game.player1.id
+        loser = await self.user_repo.get_by_id(loser_id)
+        if loser:
+            loser.elo_rating = max(0, loser.elo_rating - 10)  # Don't go below 0
+
+        await self.user_repo.session.commit()

@@ -2,22 +2,34 @@ import { useState } from 'react';
 import type { GameMode } from '../../types/game';
 
 interface GameModeSelectorProps {
-  onStartGame: (mode: GameMode, playerSecret?: string) => void;
+  onStartGame: (mode: GameMode, playerSecret?: string, aiDifficulty?: string) => void;
 }
 
 export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
   const [selectedMode, setSelectedMode] = useState<GameMode>('single');
   const [useCustomSecret, setUseCustomSecret] = useState(false);
   const [playerSecret, setPlayerSecret] = useState('');
+  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'hard'>('easy');
   const [error, setError] = useState('');
 
   const handleStartGame = () => {
-    if (selectedMode === 'ai' && useCustomSecret) {
+    // For PvP, custom secret is required
+    if (selectedMode === 'pvp') {
       if (playerSecret.length !== 4 || !/^\d{4}$/.test(playerSecret)) {
-        setError('Please enter a valid 4-digit code');
+        setError('Please enter a valid 4-digit code for PvP mode');
         return;
       }
       onStartGame(selectedMode, playerSecret);
+    } else if (selectedMode === 'ai') {
+      if (useCustomSecret) {
+        if (playerSecret.length !== 4 || !/^\d{4}$/.test(playerSecret)) {
+          setError('Please enter a valid 4-digit code');
+          return;
+        }
+        onStartGame(selectedMode, playerSecret, aiDifficulty);
+      } else {
+        onStartGame(selectedMode, undefined, aiDifficulty);
+      }
     } else {
       onStartGame(selectedMode);
     }
@@ -88,9 +100,42 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
             </div>
           </button>
 
-          {/* AI Secret Setter (only shown if AI mode selected) */}
+          {/* AI Settings (only shown if AI mode selected) */}
           {selectedMode === "ai" && (
             <div className="ml-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+              {/* AI Difficulty Selection */}
+              <div className="mb-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">AI Difficulty:</p>
+                <div className="flex gap-3">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="aiDifficulty"
+                      value="easy"
+                      checked={aiDifficulty === 'easy'}
+                      onChange={(e) => setAiDifficulty(e.target.value as 'easy' | 'hard')}
+                      className="w-4 h-4 text-purple-600"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Easy (Brad, ELO 800)
+                    </span>
+                  </label>
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="aiDifficulty"
+                      value="hard"
+                      checked={aiDifficulty === 'hard'}
+                      onChange={(e) => setAiDifficulty(e.target.value as 'easy' | 'hard')}
+                      className="w-4 h-4 text-purple-600"
+                    />
+                    <span className="text-sm text-gray-700">
+                      Hard (AradzBot, ELO 2000)
+                    </span>
+                  </label>
+                </div>
+              </div>
+
               <label className="flex items-center space-x-2 mb-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -134,21 +179,54 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
             </div>
           )}
 
-          {/* PvP Mode (Coming Soon) */}
+          {/* PvP Mode */}
           <button
-            disabled
-            className="w-full p-4 rounded-xl border-2 border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
+            onClick={() => {
+              setSelectedMode("pvp");
+              setPlayerSecret("");
+              setError("");
+            }}
+            className={`w-full p-4 rounded-xl border-2 transition-all ${
+              selectedMode === "pvp"
+                ? "border-pink-600 bg-pink-50 shadow-md"
+                : "border-gray-200 hover:border-pink-300"
+            }`}
           >
             <div className="flex items-start">
               <div className="flex-1 text-left">
                 <h3 className="font-bold text-lg text-gray-800">
                   Player vs Player
                 </h3>
-                <p className="text-sm text-gray-600">Coming soon!</p>
+                <p className="text-sm text-gray-600">
+                  Race against another human player
+                </p>
               </div>
               <div className="text-3xl">⚔️</div>
             </div>
           </button>
+
+          {/* PvP Secret Input (required) */}
+          {selectedMode === "pvp" && (
+            <div className="ml-4 p-4 bg-pink-50 rounded-lg border border-pink-200">
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Set your secret code:
+              </p>
+              <input
+                type="text"
+                value={playerSecret}
+                onChange={(e) => handleSecretChange(e.target.value)}
+                placeholder="Enter 4 digits"
+                maxLength={4}
+                className="w-full px-4 py-2 text-2xl text-center tracking-widest border-2 border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono"
+              />
+              {error && (
+                <p className="text-red-500 text-sm mt-1">{error}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-2">
+                Your opponent will try to guess this code
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Start Game Button */}

@@ -13,6 +13,10 @@ class RandomAI(BaseAI):
     def name(self) -> str:
         return "Brad"
 
+    @property
+    def elo(self) -> int:
+        return 200
+
     def get_next_guess(self) -> str:
         max_attempts = 100
         for _ in range(max_attempts):

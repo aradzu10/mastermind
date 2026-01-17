@@ -34,6 +34,7 @@ class SingleGameRepository(BaseRepository[SingleGame]):
             name=user.display_name,  # type: ignore
             secret=secret,
             guesses=[],
+            elo=user.elo_rating,  # type: ignore
         )
         return await super().create(
             player=player,
@@ -74,6 +75,7 @@ class SingleGameRepository(BaseRepository[SingleGame]):
             name=game.player.name,
             secret=game.player.secret,
             guesses=game.player.guesses + curr_guess,
+            elo=game.player.elo,
         )
         game.player = player
         if is_winner:
@@ -95,12 +97,14 @@ class PvPGameRepository(BaseRepository[PvPGame]):
             name=user.display_name,  # type: ignore
             secret="",
             guesses=[],
+            elo=user.elo_rating,  # type: ignore
         )
         player2 = PlayerState(
             id=None,  # type: ignore
             name=None,  # type: ignore
             secret=secret,
             guesses=[],
+            elo=None,  # type: ignore
         )
         return await super().create(
             player1=player1,
@@ -115,12 +119,14 @@ class PvPGameRepository(BaseRepository[PvPGame]):
             name=game.player1.name,
             secret=secret,
             guesses=game.player1.guesses,
+            elo=game.player1.elo,
         )
         player2 = PlayerState(
             id=user.id,  # type: ignore
             name=user.display_name,  # type: ignore
             secret=game.player2.secret,
             guesses=[],
+            elo=user.elo_rating,  # type: ignore
         )
         game.player1 = player1
         game.player2 = player2
@@ -136,6 +142,7 @@ class PvPGameRepository(BaseRepository[PvPGame]):
         user_secret: str,
         ai_secret: str,
         ai_name: str,
+        ai_elo: int,
         ai_difficulty: str,
     ) -> PvPGame:  # type: ignore
         player1 = PlayerState(
@@ -143,12 +150,14 @@ class PvPGameRepository(BaseRepository[PvPGame]):
             name=user.display_name,  # type: ignore
             secret=user_secret,
             guesses=[],
+            elo=user.elo_rating,  # type: ignore
         )
         player2 = PlayerState(
             id=None,  # type: ignore
             name=ai_name,
             secret=ai_secret,
             guesses=[],
+            elo=ai_elo,
         )
         return await super().create(
             player1=player1,
@@ -185,6 +194,7 @@ class PvPGameRepository(BaseRepository[PvPGame]):
                 name=game.player1.name,
                 secret=game.player1.secret,
                 guesses=game.player1.guesses + curr_guess,
+                elo=game.player1.elo,
             )
             game.player1 = player
         else:
@@ -193,6 +203,7 @@ class PvPGameRepository(BaseRepository[PvPGame]):
                 name=game.player2.name,
                 secret=game.player2.secret,
                 guesses=game.player2.guesses + curr_guess,
+                elo=game.player2.elo,
             )
             game.player2 = player
         if is_winner:

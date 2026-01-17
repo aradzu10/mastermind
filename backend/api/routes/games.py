@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/games", tags=["games"])
 def _game_response_from_game(game: Game, user: User) -> GameResponse:
     if game.game_mode == "single":
         self_player = game.player
-        opponent_player = PlayerState(id=None, name=None, secret=None, guesses=None)
+        opponent_player = PlayerState(id=None, name=None, secret=None, guesses=None, elo=None)
     elif game.game_mode == "ai":
         self_player = game.player1
         opponent_player = game.player2
@@ -30,6 +30,7 @@ def _game_response_from_game(game: Game, user: User) -> GameResponse:
         self_name=self_player.name,
         self_secret=self_secret,  # type: ignore
         self_guesses=self_player.guesses,
+        self_elo=self_player.elo,
         winner_id=game.winner_id,
         created_at=game.created_at,
         completed_at=game.completed_at,
@@ -40,6 +41,7 @@ def _game_response_from_game(game: Game, user: User) -> GameResponse:
         opponent_name=opponent_player.name,
         opponent_secret=opponent_player.secret,
         opponent_guesses=opponent_player.guesses,
+        opponent_elo=opponent_player.elo,
         current_turn=getattr(game, "current_turn", None),
         # AI Specific
         ai_difficulty=getattr(game, "ai_difficulty", None),

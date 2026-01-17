@@ -15,6 +15,7 @@ interface GameState {
     playerSecret?: string,
     aiDifficulty?: string
   ) => Promise<void>;
+  getGame: (gameId: number) => Promise<Game>;
   makeGuess: (guess: string) => Promise<void>;
   opponentGuess: () => Promise<void>;
   resetGame: () => void;
@@ -44,6 +45,17 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({ game, loading: false, currentGuess: "" });
     } catch (error) {
       set({ error: "Failed to create game", loading: false });
+    }
+  },
+
+  getGame: async (gameId: number) => {
+    try {
+      const game = await gameApi.getGame(gameId);
+      set({ game });
+      return game;
+    } catch (error) {
+      set({ error: "Failed to get game" });
+      throw error;
     }
   },
 

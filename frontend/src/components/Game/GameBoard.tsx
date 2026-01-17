@@ -4,6 +4,7 @@ import GuessInput from "./GuessInput";
 import GuessHistory from "./GuessHistory";
 import { UserBadge } from "../Auth/UserBadge";
 import { GameModeSelector } from "./GameModeSelector";
+import { WaitingForMatch } from "./WaitingForMatch";
 import type { GameMode } from "../../types/game";
 
 export default function GameBoard() {
@@ -12,8 +13,8 @@ export default function GameBoard() {
   const [showModeSelector, setShowModeSelector] = useState(!game);
   const previousOpponentGuessCountRef = useRef(0);
 
-  const handleStartGame = async (mode: GameMode, playerSecret?: string) => {
-    await createGame(mode, playerSecret, mode === "ai" ? "easy" : undefined);
+  const handleStartGame = async (mode: GameMode, playerSecret?: string, aiDifficulty?: string) => {
+    await createGame(mode, playerSecret, aiDifficulty);
     setShowModeSelector(false);
   };
 
@@ -41,6 +42,17 @@ export default function GameBoard() {
   // Show mode selector if no game
   if (showModeSelector || (!game && !loading)) {
     return <GameModeSelector onStartGame={handleStartGame} />;
+  }
+
+  // Show waiting screen for PvP games that haven't started
+  if (game && game.game_mode === 'pvp' && game.status === 'waiting') {
+    return (
+      <WaitingForMatch
+        gameId={game.id}
+        playerSecret={game.opponent_secret || ''}
+        onCancel={handleNewGame}
+      />
+    );
   }
 
   if (loading && !game) {
@@ -143,6 +155,11 @@ export default function GameBoard() {
                   <div className="bg-indigo-50 rounded-lg p-4 border-2 border-indigo-200">
                     <h2 className="text-xl font-bold text-indigo-900 mb-2">
                       👤 You
+                      {game?.self_elo && (
+                        <span className="text-sm font-normal text-indigo-600 ml-2">
+                          (ELO: {game.self_elo})
+                        </span>
+                      )}
                     </h2>
                     <p className="text-sm text-indigo-700 mb-2">
                       Guess the computer's secret code
@@ -172,6 +189,11 @@ export default function GameBoard() {
                   <div className="bg-purple-50 rounded-lg p-4 border-2 border-purple-200">
                     <h2 className="text-xl font-bold text-purple-900 mb-2">
                       {opponentEmoji} {game?.opponent_name}
+                      {game?.opponent_elo && (
+                        <span className="text-sm font-normal text-purple-600 ml-2">
+                          (ELO: {game.opponent_elo})
+                        </span>
+                      )}
                     </h2>
                     <p className="text-sm text-purple-700 mb-2">
                       Opponent is guessing your secret code
@@ -185,6 +207,16 @@ export default function GameBoard() {
                     {gameOver && opponentWon && (
                       <div className="mt-2 text-red-600 font-semibold">
                         ✓ Opponent cracked it!
+                      </div>
+                    )}
+                    {!gameOver && opponentThinking && (
+                      <div className="mt-2 flex items-center space-x-2 text-purple-600">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                        <span className="text-sm font-medium">Thinking...</span>
                       </div>
                     )}
                   </div>
