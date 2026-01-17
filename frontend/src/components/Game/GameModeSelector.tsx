@@ -7,29 +7,23 @@ interface GameModeSelectorProps {
 
 export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
   const [selectedMode, setSelectedMode] = useState<GameMode>('single');
-  const [useCustomSecret, setUseCustomSecret] = useState(false);
   const [playerSecret, setPlayerSecret] = useState('');
   const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'hard'>('easy');
   const [error, setError] = useState('');
 
   const handleStartGame = () => {
-    // For PvP, custom secret is required
+    // Validate secret if provided
+    if (playerSecret && (playerSecret.length !== 4 || !/^\d{4}$/.test(playerSecret))) {
+      setError('Please enter a valid 4-digit code or leave empty for random');
+      return;
+    }
+
+    const secret = playerSecret || undefined;
+
     if (selectedMode === 'pvp') {
-      if (playerSecret.length !== 4 || !/^\d{4}$/.test(playerSecret)) {
-        setError('Please enter a valid 4-digit code for PvP mode');
-        return;
-      }
-      onStartGame(selectedMode, playerSecret);
+      onStartGame(selectedMode, secret);
     } else if (selectedMode === 'ai') {
-      if (useCustomSecret) {
-        if (playerSecret.length !== 4 || !/^\d{4}$/.test(playerSecret)) {
-          setError('Please enter a valid 4-digit code');
-          return;
-        }
-        onStartGame(selectedMode, playerSecret, aiDifficulty);
-      } else {
-        onStartGame(selectedMode, undefined, aiDifficulty);
-      }
+      onStartGame(selectedMode, secret, aiDifficulty);
     } else {
       onStartGame(selectedMode);
     }
@@ -55,7 +49,8 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
           <button
             onClick={() => {
               setSelectedMode("single");
-              setUseCustomSecret(false);
+              setPlayerSecret("");
+              setError("");
             }}
             className={`w-full p-4 rounded-xl border-2 transition-all ${
               selectedMode === "single"
@@ -80,6 +75,8 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
           <button
             onClick={() => {
               setSelectedMode("ai");
+              setPlayerSecret("");
+              setError("");
             }}
             className={`w-full p-4 rounded-xl border-2 transition-all ${
               selectedMode === "ai"
@@ -136,46 +133,23 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
                 </div>
               </div>
 
-              <label className="flex items-center space-x-2 mb-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={useCustomSecret}
-                  onChange={(e) => {
-                    setUseCustomSecret(e.target.checked);
-                    setPlayerSecret("");
-                    setError("");
-                  }}
-                  className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  Set my own secret code
-                </span>
-              </label>
-
-              {useCustomSecret && (
-                <div>
-                  <input
-                    type="text"
-                    value={playerSecret}
-                    onChange={(e) => handleSecretChange(e.target.value)}
-                    placeholder="Enter 4 digits"
-                    maxLength={4}
-                    className="w-full px-4 py-2 text-2xl text-center tracking-widest border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono"
-                  />
-                  {error && (
-                    <p className="text-red-500 text-sm mt-1">{error}</p>
-                  )}
-                  <p className="text-xs text-gray-500 mt-2">
-                    AI will try to guess your code
-                  </p>
-                </div>
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Set your secret code (optional):
+              </p>
+              <input
+                type="text"
+                value={playerSecret}
+                onChange={(e) => handleSecretChange(e.target.value)}
+                placeholder="Enter 4 digits"
+                maxLength={4}
+                className="w-full px-4 py-2 text-2xl text-center tracking-widest border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono"
+              />
+              {error && (
+                <p className="text-red-500 text-sm mt-1">{error}</p>
               )}
-
-              {!useCustomSecret && (
-                <p className="text-xs text-gray-500">
-                  A random code will be generated for you
-                </p>
-              )}
+              <p className="text-xs text-gray-500 mt-2">
+                Leave empty for a random code
+              </p>
             </div>
           )}
 
@@ -205,11 +179,11 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
             </div>
           </button>
 
-          {/* PvP Secret Input (required) */}
+          {/* PvP Secret Input (optional) */}
           {selectedMode === "pvp" && (
             <div className="ml-4 p-4 bg-pink-50 rounded-lg border border-pink-200">
               <p className="text-sm font-medium text-gray-700 mb-2">
-                Set your secret code:
+                Set your secret code (optional):
               </p>
               <input
                 type="text"
@@ -223,7 +197,7 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
                 <p className="text-red-500 text-sm mt-1">{error}</p>
               )}
               <p className="text-xs text-gray-500 mt-2">
-                Your opponent will try to guess this code
+                Leave empty for a random code
               </p>
             </div>
           )}
