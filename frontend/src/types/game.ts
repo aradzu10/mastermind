@@ -27,7 +27,7 @@ export interface Game {
   opponent_elo?: number;
   old_opponent_elo?: number; // ELO before game completion
   current_turn?: number;
-  status?: "waiting" | "in_progress" | "completed";
+  status?: "waiting" | "in_progress" | "completed" | "abandoned";
   started_at?: string;
 
   // AI specific fields

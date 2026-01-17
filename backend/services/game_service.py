@@ -152,3 +152,33 @@ class GameService:
             loser.elo_rating = max(0, loser.elo_rating - 10)  # Don't go below 0
 
         await self.user_repo.session.commit()
+
+    async def abandon_game(self, game_id: int, user: User) -> Game:
+        game = await self.get_game(game_id, user)
+
+        if game.status != "in_progress":
+            raise ValueError("Can only abandon games that are in progress")
+        if game.game_mode == "single":
+            raise ValueError("Cannot abandon single player games")
+
+        game = await self.pvp_repo.abandon_game(game, user)
+        await self._update_abandon_elo(game, user)
+        return game
+
+    async def _update_abandon_elo(self, game: Game, abandoner: User) -> None:
+        if game.player1.id == abandoner.id:
+            winner = await self.user_repo.get_by_id(game.player2.id)
+            loser = abandoner
+            game.player1.elo = max(0, game.player1.elo - 10)
+            game.player2.elo += 20
+        else:
+            winner = await self.user_repo.get_by_id(game.player1.id)
+            loser = abandoner
+            game.player2.elo = max(0, game.player2.elo - 10)
+            game.player1.elo += 20
+
+        if winner:
+            winner.elo_rating += 20
+        loser.elo_rating = max(0, loser.elo_rating - 10)
+
+        await self.user_repo.session.commit()

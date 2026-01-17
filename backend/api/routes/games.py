@@ -22,7 +22,7 @@ def _game_response_from_game(game: Game, user: User) -> GameResponse:
         self_player = game.player1 if game.player1.id == user.id else game.player2
         opponent_player = game.player2 if game.player1.id == user.id else game.player1
 
-    self_secret = self_player.secret if game.status == "completed" else None
+    self_secret = self_player.secret if game.status in ("completed", "abandoned") else None
     return GameResponse(
         id=game.id,
         game_mode=game.game_mode,
@@ -110,6 +110,22 @@ async def opponent_guess(
 
     try:
         game = await service.get_opponent_guess(game_id, user)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return _game_response_from_game(game, user)
+
+
+@router.post("/{game_id}/abandon", response_model=GameResponse)
+async def abandon_game(
+    game_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    service = GameService(db)
+
+    try:
+        game = await service.abandon_game(game_id, user)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

@@ -131,7 +131,7 @@ export function GameOverScreen({ game, onExit }: GameOverScreenProps) {
                 {opponentName} cracked your code:
               </p>
               <p className="text-3xl font-mono font-bold text-red-900 text-center tracking-wider">
-                {game.opponent_secret || "****"}
+                {game.opponent_secret}
               </p>
               <p className="text-sm text-red-600 mt-2 text-center">
                 in {game.opponent_guesses?.length || 0}{" "}

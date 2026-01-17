@@ -65,4 +65,9 @@ export const gameApi = {
     );
     return response.data;
   },
+
+  abandonGame: async (gameId: number): Promise<Game> => {
+    const response = await api.post<Game>(`/api/games/${gameId}/abandon`);
+    return response.data;
+  },
 };

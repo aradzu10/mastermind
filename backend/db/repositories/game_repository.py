@@ -219,3 +219,16 @@ class PvPGameRepository(BaseRepository[PvPGame]):
         await self.session.flush()
         await self.session.refresh(game)
         return game
+
+    async def abandon_game(self, game: PvPGame, abandoner: User) -> PvPGame:
+        if game.player1.id == abandoner.id:
+            winner_id = game.player2.id
+        else:
+            winner_id = game.player1.id
+
+        game.winner_id = winner_id  # type: ignore
+        game.status = "abandoned"  # type: ignore
+        game.completed_at = datetime.utcnow()  # type: ignore
+        await self.session.flush()
+        await self.session.refresh(game)
+        return game

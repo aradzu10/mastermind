@@ -2,6 +2,14 @@ import { create } from 'zustand';
 import type { Game, GameMode } from '../types/game';
 import { gameApi } from '../services/api';
 
+// Helper function to calculate if opponent is thinking
+const calculateOpponentThinking = (game: Game): boolean => {
+  if (game.game_mode === 'single' || game.winner_id !== null) {
+    return false;
+  }
+  return game.opponent_id !== undefined && game.current_turn === game.opponent_id;
+};
+
 interface GameState {
   game: Game | null;
   loading: boolean;
@@ -18,6 +26,7 @@ interface GameState {
   getGame: (gameId: number) => Promise<Game>;
   makeGuess: (guess: string) => Promise<void>;
   opponentGuess: () => Promise<void>;
+  abandonGame: () => Promise<void>;
   resetGame: () => void;
 }
 
@@ -42,18 +51,16 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const game = await gameApi.createGame(mode, playerSecret, aiDifficulty);
+      const gameWithElo = {
+        ...game,
+        old_self_elo: game.self_elo,
+        old_opponent_elo: game.opponent_elo,
+      };
       set({
-        game: {
-          ...game,
-          old_self_elo: game.self_elo,
-          old_opponent_elo: game.opponent_elo,
-        },
+        game: gameWithElo,
         loading: false,
         currentGuess: "",
-        opponentThinking:
-          game.opponent_id === undefined
-            ? false
-            : game.current_turn === game.opponent_id,
+        opponentThinking: calculateOpponentThinking(gameWithElo),
       });
     } catch (error) {
       set({ error: "Failed to create game", loading: false });
@@ -62,9 +69,17 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   getGame: async (gameId: number) => {
     try {
-      const game = await gameApi.getGame(gameId);
-      set({ game });
-      return game;
+      const result = await gameApi.getGame(gameId);
+      const gameWithElo = {
+        ...result,
+        old_self_elo: result.self_elo,
+        old_opponent_elo: result.opponent_elo,
+      };
+      set({
+        game: gameWithElo,
+        opponentThinking: calculateOpponentThinking(result),
+      });
+      return result;
     } catch (error) {
       set({ error: "Failed to get game" });
       throw error;
@@ -78,24 +93,16 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const result = await gameApi.makeGuess(game.id, guess);
-
+      const gameWithElo = {
+        ...result,
+        old_self_elo: result.self_elo,
+        old_opponent_elo: result.opponent_elo,
+      };
       set({
-        game: {
-          ...game,
-          self_guesses: [...result.self_guesses],
-          self_elo: result.self_elo,
-          self_secret: result.self_secret,
-          opponent_elo: result.opponent_elo,
-          old_self_elo: game.old_self_elo ?? game.self_elo,
-          old_opponent_elo: game.old_opponent_elo ?? game.opponent_elo,
-          winner_id: result.winner_id,
-          completed_at: result.completed_at,
-          current_turn: result.current_turn,
-        },
+        game: gameWithElo,
         currentGuess: "",
         loading: false,
-        opponentThinking:
-          game.game_mode !== "single" && result.winner_id === null,
+        opponentThinking: calculateOpponentThinking(gameWithElo),
       });
     } catch (error) {
       set({ error: "Failed to make guess", loading: false });
@@ -106,7 +113,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { game } = get();
     if (!game || game.winner_id || game.game_mode === "single") return;
 
-    // set({ loading: true, error: null });
     try {
       const result = await gameApi.opponentGuess(game.id);
 
@@ -115,31 +121,34 @@ export const useGameStore = create<GameState>((set, get) => ({
           (game.opponent_guesses?.length || 0) ||
         result.winner_id !== null
       ) {
-        console.log(result);
-        console.log(game);
+        const gameWithElo = {
+          ...result,
+          old_self_elo: result.self_elo,
+          old_opponent_elo: result.opponent_elo,
+        };
         set({
-          game: {
-            ...game,
-            opponent_guesses: [...(result.opponent_guesses || [])],
-            self_elo: result.self_elo,
-            self_secret: result.self_secret,
-            opponent_elo: result.opponent_elo,
-            old_self_elo: game.old_self_elo ?? game.self_elo,
-            old_opponent_elo: game.old_opponent_elo ?? game.opponent_elo,
-            winner_id: result.winner_id,
-            completed_at: result.completed_at,
-            current_turn: result.current_turn,
-          },
+          game: gameWithElo,
           loading: false,
-          opponentThinking: false,
+          opponentThinking: calculateOpponentThinking(gameWithElo),
         });
-      } else {
-        // set({
-        //   loading: false,
-        // });
       }
     } catch (error) {
       set({ error: "Failed to get opponent's guess", loading: false });
+    }
+  },
+
+  abandonGame: async () => {
+    const { game } = get();
+    if (!game) return;
+
+    if (game.status !== "in_progress" || game.game_mode === "single") {
+      return;
+    }
+
+    try {
+      await gameApi.abandonGame(game.id);
+    } catch (error) {
+      console.error("Failed to abandon game:", error);
     }
   },
 

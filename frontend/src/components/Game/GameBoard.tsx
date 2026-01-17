@@ -7,6 +7,7 @@ import { GameModeSelector } from "./GameModeSelector";
 import { WaitingForMatch } from "./WaitingForMatch";
 import { MatchFoundScreen } from "./MatchFoundScreen";
 import { GameOverScreen } from "./GameOverScreen";
+import { OpponentLeftScreen } from "./OpponentLeftScreen";
 import type { GameMode } from "../../types/game";
 
 export default function GameBoard() {
@@ -18,11 +19,13 @@ export default function GameBoard() {
     resetGame,
     opponentGuess,
     opponentThinking,
+    abandonGame,
+    getGame,
   } = useGameStore();
   const [showModeSelector, setShowModeSelector] = useState(!game);
   const [showWaitingScreen, setShowWaitingScreen] = useState(false);
   const [showMatchFound, setShowMatchFound] = useState(false);
-  const [debugTrigger, setDebugTrigger] = useState(0);
+  const [showOpponentLeft, setShowOpponentLeft] = useState(false);
   const gameRef = useRef(game);
 
   const handleStartGame = async (
@@ -36,10 +39,15 @@ export default function GameBoard() {
   };
 
   const handleNewGame = async () => {
+    // If there's an active game, abandon it first
+    if (game && game.status === "in_progress" && game.game_mode !== "single") {
+      await abandonGame();
+    }
     resetGame();
     setShowModeSelector(true);
     setShowWaitingScreen(false);
     setShowMatchFound(false);
+    setShowOpponentLeft(false);
   };
 
   const handleMatchFound = () => {
@@ -55,17 +63,44 @@ export default function GameBoard() {
     gameRef.current = game;
   }, [game]);
 
+  // Poll for abandoned status when it's player's turn
   useEffect(() => {
-    // Debug effect - does nothing
-    const x = 1;
-  }, [debugTrigger]);
+    if (!game || game.winner_id !== null || game.game_mode === "single") {
+      return;
+    }
+
+    const isPlayerTurn = game.game_mode === "pvp" ? game.current_turn === game.self_id : false;
+
+    if (isPlayerTurn) {
+      const checkAbandoned = async () => {
+        try {
+          const updatedGame = await getGame(game.id);
+          if (updatedGame.status === "abandoned") {
+            setShowOpponentLeft(true);
+          }
+        } catch (error) {
+          console.error("Failed to check game status:", error);
+        }
+      };
+
+      // Then poll every 1 second
+      const pollInterval = setInterval(checkAbandoned, 1000);
+
+      return () => clearInterval(pollInterval);
+    }
+  }, [game?.status]);
 
   useEffect(() => {
     if (opponentThinking) {
-      const tick = () => {
+      const tick = async () => {
         const currentGame = gameRef.current;
         if (currentGame && currentGame.winner_id === null && opponentThinking) {
-          opponentGuess();
+          await opponentGuess();
+          // Check if game was abandoned after opponent's move
+          const updatedGame = gameRef.current;
+          if (updatedGame && updatedGame.status === "abandoned") {
+            setShowOpponentLeft(true);
+          }
         }
       };
 
@@ -77,7 +112,7 @@ export default function GameBoard() {
 
       return () => clearInterval(pollInterval);
     }
-  }, [opponentThinking]);
+  }, [opponentThinking, opponentGuess]);
 
   // Show mode selector if no game
   if (showModeSelector || (!game && !loading)) {
@@ -165,13 +200,6 @@ export default function GameBoard() {
                 </h1>
               </div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setDebugTrigger(prev => prev + 1)}
-                  className="px-6 py-3 bg-yellow-500 text-white rounded-lg font-semibold
-                           hover:bg-yellow-600 transition-colors shadow-md"
-                >
-                  Debug
-                </button>
                 <button
                   onClick={handleNewGame}
                   className="px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold
@@ -329,11 +357,13 @@ export default function GameBoard() {
         </div>
 
         {/* Game Over Screen Overlay */}
-        {gameOver && (
-          <GameOverScreen
-            game={game}
-            onExit={handleNewGame}
-          />
+        {gameOver && game.status !== "abandoned" && (
+          <GameOverScreen game={game} onExit={handleNewGame} />
+        )}
+
+        {/* Opponent Left Screen Overlay */}
+        {showOpponentLeft && game.status === "abandoned" && (
+          <OpponentLeftScreen game={game} onExit={handleNewGame} />
         )}
       </div>
     </div>
