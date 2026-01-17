@@ -11,7 +11,7 @@ export default function GameBoard() {
   const [showModeSelector, setShowModeSelector] = useState(!game);
 
   const handleStartGame = async (mode: GameMode, playerSecret?: string) => {
-    await createGame(mode, playerSecret);
+    await createGame(mode, playerSecret, mode === "ai" ? "easy" : undefined);
     setShowModeSelector(false);
   };
 
@@ -49,10 +49,15 @@ export default function GameBoard() {
     );
   }
 
-  const isAIMode = game?.game_mode === 'ai';
-  const playerWon = game?.won || false;
-  const aiWon = game?.ai_won || false;
-  const gameOver = playerWon || aiWon;
+  const isPvPMode = game?.game_mode !== "single";
+  const opponentEmoji = (game?.game_mode === "ai" ? "🤖" : "");
+  const playerWon = game?.winner_id === game?.self_id;
+  const opponentWon = game?.winner_id === game?.opponent_id;
+  const gameOver = game?.winner_id !== null;
+
+  if (!game) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8 px-4">
@@ -67,10 +72,12 @@ export default function GameBoard() {
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold">Mastermind</h1>
-                <p className="text-indigo-100 mt-1">
-                  {isAIMode ? '🤖 AI Opponent Mode' : '🎯 Single Player'}
-                </p>
+                <h1 className="text-3xl font-bold">
+                  Mastermind -{" "}
+                  {isPvPMode
+                    ? `You ⚔️ ${game?.opponent_name} ${opponentEmoji}`
+                    : "🎯 Single Player"}
+                </h1>
               </div>
               <button
                 onClick={handleNewGame}
@@ -83,24 +90,36 @@ export default function GameBoard() {
           </div>
 
           {/* Game Over Message */}
-          {gameOver && game && (
-            <div className={`p-4 ${playerWon ? 'bg-green-100 border-green-300' : aiWon ? 'bg-red-100 border-red-300' : 'bg-blue-100 border-blue-300'} border-b-2`}>
-              <div className={`font-semibold text-lg ${playerWon ? 'text-green-800' : aiWon ? 'text-red-800' : 'text-blue-800'}`}>
-                {playerWon && !aiWon && `🎉 You won in ${game.attempts} attempts!`}
-                {aiWon && !playerWon && `😔 AI won! It guessed your code in ${game.ai_guesses?.length || 0} attempts.`}
-                {playerWon && aiWon && `🤝 It's a tie! You both guessed the codes!`}
+          {gameOver && (
+            <div
+              className={`p-4 ${playerWon ? "bg-green-100 border-green-300" : opponentWon ? "bg-red-100 border-red-300" : "bg-blue-100 border-blue-300"} border-b-2`}
+            >
+              <div
+                className={`font-semibold text-lg ${playerWon ? "text-green-800" : opponentWon ? "text-red-800" : "text-blue-800"}`}
+              >
+                {playerWon &&
+                  !opponentWon &&
+                  `🎉 You won in ${game.self_guesses.length} attempts!`}
+                {opponentWon &&
+                  !playerWon &&
+                  `😔 Opponent won! It guessed your code in ${game.opponent_guesses?.length || 0} attempts.`}
+                {playerWon &&
+                  opponentWon &&
+                  `🤝 It's a tie! You both guessed the codes!`}
               </div>
-              {game.player_secret && (
+              {game.self_secret && (
                 <p className="text-sm text-gray-700 mt-2">
-                  Your secret was: <span className="font-mono font-bold text-lg">{game.player_secret}</span>
+                  Your secret was:{" "}
+                  <span className="font-mono font-bold text-lg">
+                    {game.self_secret}
+                  </span>
                 </p>
               )}
             </div>
           )}
 
           <div className="p-8">
-            {isAIMode ? (
-              // Dual View for AI Mode
+            {isPvPMode ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Player Side */}
                 <div className="space-y-4">
@@ -112,45 +131,58 @@ export default function GameBoard() {
                       Guess the computer's secret code
                     </p>
                     <div className="text-indigo-600">
-                      Attempts: <span className="font-bold text-indigo-900">{game.attempts || 0}</span>
+                      Attempts:{" "}
+                      <span className="font-bold text-indigo-900">
+                        {game.self_guesses.length}
+                      </span>
                     </div>
-                    {playerWon && (
-                      <div className="mt-2 text-green-600 font-semibold">✓ You cracked it!</div>
+                    {gameOver && playerWon && (
+                      <div className="mt-2 text-green-600 font-semibold">
+                        ✓ You cracked it!
+                      </div>
                     )}
                   </div>
 
                   <GuessInput disabled={gameOver} />
-                  <GuessHistory guesses={game.guesses || []} title="Your Guesses" />
+                  <GuessHistory
+                    guesses={game.self_guesses}
+                    title="Your Guesses"
+                  />
                 </div>
 
-                {/* AI Side */}
+                {/* Opponent Side */}
                 <div className="space-y-4">
                   <div className="bg-purple-50 rounded-lg p-4 border-2 border-purple-200">
                     <h2 className="text-xl font-bold text-purple-900 mb-2">
-                      🤖 AI Opponent
+                      {opponentEmoji} {game?.opponent_name}
                     </h2>
                     <p className="text-sm text-purple-700 mb-2">
-                      AI is guessing your secret code
+                      Opponent is guessing your secret code
                     </p>
                     <div className="text-purple-600">
-                      Attempts: <span className="font-bold text-purple-900">{game.ai_guesses?.length || 0}</span>
+                      Attempts:{" "}
+                      <span className="font-bold text-purple-900">
+                        {game.opponent_guesses?.length || 0}
+                      </span>
                     </div>
-                    {aiWon && (
-                      <div className="mt-2 text-red-600 font-semibold">✓ AI cracked it!</div>
+                    {gameOver && opponentWon && (
+                      <div className="mt-2 text-red-600 font-semibold">
+                        ✓ Opponent cracked it!
+                      </div>
                     )}
                   </div>
 
                   <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
                     <p className="text-sm text-purple-700">
-                      {gameOver 
-                        ? `Your secret: ${game.player_secret}`
-                        : 'Your secret is hidden'}
+                      {gameOver
+                        ? `Your secret: ${game.self_secret}`
+                        : "Your secret is hidden"}
                     </p>
                   </div>
 
-                  <GuessHistory 
-                    guesses={game.ai_guesses || []} 
-                    title="AI's Guesses" 
+                  <GuessHistory
+                    guesses={game.opponent_guesses || []}
+                    title="Opponent's Guesses"
                     isOpponent={true}
                   />
                 </div>
@@ -160,12 +192,15 @@ export default function GameBoard() {
               <div className="max-w-2xl mx-auto">
                 <div className="mb-8">
                   <div className="text-gray-600 mb-4">
-                    Attempts: <span className="font-bold text-gray-800">{game?.attempts || 0}</span>
+                    Attempts:{" "}
+                    <span className="font-bold text-gray-800">
+                      {game.self_guesses.length}
+                    </span>
                   </div>
                   <GuessInput disabled={gameOver} />
                 </div>
 
-                <GuessHistory guesses={game?.guesses || []} />
+                <GuessHistory guesses={game.self_guesses} />
               </div>
             )}
           </div>

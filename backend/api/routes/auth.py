@@ -1,14 +1,11 @@
-"""
-Authentication routes for user management and token generation.
-"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.db.database import get_db
-from backend.schemas.auth import GuestUserCreate, GoogleAuthRequest, TokenResponse, UserResponse
-from backend.services.auth_service import AuthService
-from backend.api.dependencies import get_current_user
-from backend.db.models.user import User
 
+from backend.api.dependencies import get_current_user
+from backend.db.database import get_db
+from backend.db.models.user import User
+from backend.schemas.auth import GoogleAuthRequest, GuestUserCreate, TokenResponse, UserResponse
+from backend.services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 

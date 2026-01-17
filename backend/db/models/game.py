@@ -1,24 +1,90 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, JSON
-from sqlalchemy.orm import relationship
+import dataclasses
 from datetime import datetime
+
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.orm import composite, relationship
+
 from backend.db.database import Base
+
+
+@dataclasses.dataclass
+class PlayerState:
+    id: int
+    name: str
+    secret: str
+    guesses: list
+
+    # Required by SQLAlchemy to map attributes back to columns
+    def __composite_values__(self):
+        return self.id, self.name, self.secret, self.guesses
 
 
 class Game(Base):
     __tablename__ = "games"
+    id = Column(Integer, primary_key=True)
+    game_type = Column(String)  # 'pvp' or 'single'
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    secret = Column(String(4), nullable=False)  # The code player is guessing (AI/computer's secret)
-    player_secret = Column(String(4), nullable=True)  # The player's code (for AI to guess)
-    attempts = Column(Integer, default=0, nullable=False)
-    won = Column(Boolean, default=False, nullable=False)
-    game_mode = Column(String, default="single", nullable=False)  # single, ai, pvp
-    guesses = Column(JSON, default=list, nullable=False)  # Player's guesses: [{guess, exact, wrong_pos}]
-    ai_guesses = Column(JSON, default=list, nullable=True)  # AI's guesses: [{guess, exact, wrong_pos}]
-    opponent_type = Column(String, default="none", nullable=False)  # none, ai, human
-    completed_at = Column(DateTime, nullable=True)
+    __mapper_args__ = {"polymorphic_identity": "games", "polymorphic_on": game_type}
+
+
+class SingleGame(Game):
+    __tablename__ = "single_games"
+    id = Column(Integer, ForeignKey("games.id"), primary_key=True)
+    __mapper_args__ = {"polymorphic_identity": "single"}
+
+    # --- Player 1 Columns & Composite ---
+    _p_id = Column("player1_id", Integer, ForeignKey("users.id"), nullable=False)
+    _p_name = Column("player1_name", String, nullable=True)
+    _p_secret = Column("player1_secret", String(4), nullable=True)
+    _p_guesses = Column("player1_guesses", JSON, default=list, nullable=False)
+    # This creates the nested structure: game.player.secret
+    player = composite(PlayerState, _p_id, _p_name, _p_secret, _p_guesses)
+
+    # --- Other Fields ---
+    game_mode = Column(String, nullable=False)
+    winner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    status = Column(String, default="waiting", nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
 
-    # Relationships
-    user = relationship("User", back_populates="games")
+    # --- Relationships ---
+    player_user = relationship("User", foreign_keys=[_p_id])
+    winner = relationship("User", foreign_keys=[winner_id])
+
+
+class PvPGame(Game):
+    __tablename__ = "pvp_games"
+    id = Column(Integer, ForeignKey("games.id"), primary_key=True)
+    __mapper_args__ = {"polymorphic_identity": "pvp"}
+
+    # --- Player 1 Columns & Composite ---
+    _p1_id = Column("player1_id", Integer, ForeignKey("users.id"), nullable=False)
+    _p1_name = Column("player1_name", String, nullable=True)
+    _p1_secret = Column("player1_secret", String(4), nullable=True)
+    _p1_guesses = Column("player1_guesses", JSON, default=list, nullable=False)
+    # This creates the nested structure: game.player1.secret
+    player1 = composite(PlayerState, _p1_id, _p1_name, _p1_secret, _p1_guesses)
+
+    # --- Player 2 Columns & Composite ---
+    _p2_id = Column("player2_id", Integer, ForeignKey("users.id"), nullable=True)
+    _p2_name = Column("player2_name", String, nullable=True)
+    _p2_secret = Column("player2_secret", String(4), nullable=True)
+    _p2_guesses = Column("player2_guesses", JSON, default=list, nullable=False)
+    # This creates the nested structure: game.player2.secret
+    player2 = composite(PlayerState, _p2_id, _p2_name, _p2_secret, _p2_guesses)
+
+    # --- Other Fields ---
+    game_mode = Column(String, nullable=False)
+    ai_difficulty = Column(String, nullable=True)
+    current_turn = Column(Integer, default=1, nullable=False)
+    winner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    status = Column(String, default="waiting", nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+
+    # --- Relationships ---
+    player1_user = relationship("User", foreign_keys=[_p1_id])
+    player2_user = relationship("User", foreign_keys=[_p2_id])
+    winner = relationship("User", foreign_keys=[winner_id])

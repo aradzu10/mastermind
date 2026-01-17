@@ -3,11 +3,11 @@ JWT token utilities for authentication.
 
 Handles creation and verification of JWT tokens using HS256 algorithm.
 """
+import os
 from datetime import datetime, timedelta
 from typing import Optional
-import os
-from jose import JWTError, jwt
 
+from jose import JWTError, jwt
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev_secret_key_change_in_production")
 ALGORITHM = "HS256"

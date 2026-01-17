@@ -1,6 +1,8 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String
+from sqlalchemy.orm import relationship
+
 from backend.db.database import Base
 
 
@@ -16,4 +18,15 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationships
-    games = relationship("Game", back_populates="user", cascade="all, delete-orphan")
+    single_games = relationship(
+        "SingleGame",
+        foreign_keys="SingleGame._p_id",
+        back_populates="player_user",
+        viewonly=True,
+    )
+    pvp_games = relationship(
+        "PvPGame",
+        primaryjoin="or_(User.id==PvPGame._p1_id, User.id==PvPGame._p2_id)",
+        foreign_keys="[PvPGame._p1_id, PvPGame._p2_id]",
+        viewonly=True,
+    )

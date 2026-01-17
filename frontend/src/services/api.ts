@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { Game, GameGuessResponse } from '../types/game';
+import type { Game } from "../types/game";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -34,10 +34,15 @@ api.interceptors.response.use(
 );
 
 export const gameApi = {
-  createGame: async (gameMode: string = 'single', playerSecret?: string): Promise<Game> => {
-    const response = await api.post<Game>('/api/games/single', { 
+  createGame: async (
+    gameMode: string,
+    playerSecret?: string,
+    aiDifficulty?: string
+  ): Promise<Game> => {
+    const response = await api.post<Game>("/api/games/new", {
       game_mode: gameMode,
-      player_secret: playerSecret 
+      player_secret: playerSecret,
+      ai_difficulty: aiDifficulty,
     });
     return response.data;
   },
@@ -47,8 +52,17 @@ export const gameApi = {
     return response.data;
   },
 
-  makeGuess: async (gameId: number, guess: string): Promise<GameGuessResponse> => {
-    const response = await api.post<GameGuessResponse>(`/api/games/${gameId}/guess`, { guess });
+  makeGuess: async (gameId: number, guess: string): Promise<Game> => {
+    const response = await api.post<Game>(`/api/games/${gameId}/guess`, {
+      guess,
+    });
+    return response.data;
+  },
+
+  opponentGuess: async (gameId: number): Promise<Game> => {
+    const response = await api.post<Game>(
+      `/api/games/${gameId}/opponent_guess`
+    );
     return response.data;
   },
 };

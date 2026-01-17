@@ -9,7 +9,7 @@ export default function GuessInput({ disabled = false }: GuessInputProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentGuess.length === 4 && !game?.won && !disabled) {
+    if (currentGuess.length === 4 && game?.winner_id === null && !disabled) {
       makeGuess(currentGuess);
     }
   };
@@ -18,7 +18,7 @@ export default function GuessInput({ disabled = false }: GuessInputProps) {
     setCurrentGuess(e.target.value);
   };
 
-  const isDisabled = loading || game?.won || !game || disabled;
+  const isDisabled = loading || game?.winner_id !== null || !game || disabled;
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-4 items-center">

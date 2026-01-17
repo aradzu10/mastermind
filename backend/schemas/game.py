@@ -1,6 +1,19 @@
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class GameCreate(BaseModel):
+    game_mode: str = Field(default="single", pattern="^(single|ai|pvp)$")
+    # For PVP or AI
+    player_secret: Optional[str] = Field(None, min_length=4, max_length=4, pattern="^[0-9]{4}$")
+    # For AI
+    ai_difficulty: Optional[str] = Field(None, pattern="^(easy|medium|hard)$")
+
+
+class GameGuess(BaseModel):
+    guess: str = Field(..., min_length=4, max_length=4, pattern="^[0-9]{4}$")
 
 
 class GuessRecord(BaseModel):
@@ -9,38 +22,27 @@ class GuessRecord(BaseModel):
     wrong_pos: int = Field(..., ge=0, le=4)
 
 
-class GameCreate(BaseModel):
-    game_mode: str = Field(default="single", pattern="^(single|ai|pvp)$")
-    player_secret: Optional[str] = Field(None, min_length=4, max_length=4, pattern="^[0-9]{4}$")  # For AI mode
-
-
-class GameGuess(BaseModel):
-    guess: str = Field(..., min_length=4, max_length=4, pattern="^[0-9]{4}$")
-
-
 class GameResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: int
-    user_id: Optional[int]
-    attempts: int
-    won: bool
     game_mode: str
-    guesses: List[GuessRecord]
-    completed_at: Optional[datetime]
+
+    self_id: int
+    self_name: str
+    self_secret: Optional[str]
+    self_guesses: List[GuessRecord]
+
+    winner_id: Optional[int]
     created_at: datetime
-    opponent_type: str = "none"  # none, ai, human
-    ai_guesses: Optional[List[GuessRecord]] = None  # AI's guesses against player's secret
-    player_secret: Optional[str] = None  # Hidden unless game is over
-    ai_won: Optional[bool] = None  # Did the AI win?
+    completed_at: Optional[datetime]
 
+    # PvP Specific
+    opponent_id: Optional[int]
+    opponent_name: Optional[str]
+    opponent_secret: Optional[str]
+    opponent_guesses: Optional[List[GuessRecord]]
+    current_turn: Optional[int]
+    status: Optional[str]
+    started_at: Optional[datetime]
 
-class GameGuessResponse(BaseModel):
-    game_id: int
-    guess: str
-    exact: int
-    wrong_pos: int
-    is_winner: bool
-    attempts: int
-    game_over: bool
-    ai_move: Optional[dict] = None  # Contains ai_guess, exact, wrong_pos, ai_won if AI mode
+    # AI Specific
+    ai_difficulty: Optional[str]

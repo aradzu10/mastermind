@@ -11,11 +11,11 @@ class GuessRecord:
 
 
 class MasterMindGame:
-    def __init__(self):
-        self.attempts = 0
+    def __init__(self, player_secret: str | None = None, history: list[GuessRecord] | None = None):
         self.num_digits = 4
-        self.secret = self._generate_secret_number()
-        self.history: list[GuessRecord] = []
+        self.secret = player_secret or self._generate_secret_number()
+        self.history: list[GuessRecord] = history or []
+        self.attempts = len(self.history)
 
     def _generate_secret_number(self) -> str:
         digits = random.choices(range(10), k=self.num_digits)

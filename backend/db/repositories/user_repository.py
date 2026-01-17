@@ -1,6 +1,8 @@
 from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
 from backend.db.models.user import User
 from backend.db.repositories.base import BaseRepository
 

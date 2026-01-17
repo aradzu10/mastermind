@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Game, GuessRecord, GameMode } from '../types/game';
+import type { Game, GameMode } from '../types/game';
 import { gameApi } from '../services/api';
 
 interface GameState {
@@ -7,10 +7,16 @@ interface GameState {
   loading: boolean;
   error: string | null;
   currentGuess: string;
+  opponentThinking: boolean;
 
   setCurrentGuess: (guess: string) => void;
-  createGame: (mode?: GameMode, playerSecret?: string) => Promise<void>;
+  createGame: (
+    mode: GameMode,
+    playerSecret?: string,
+    aiDifficulty?: string
+  ) => Promise<void>;
   makeGuess: (guess: string) => Promise<void>;
+  opponentGuess: () => Promise<void>;
   resetGame: () => void;
 }
 
@@ -18,7 +24,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   game: null,
   loading: false,
   error: null,
-  currentGuess: '',
+  currentGuess: "",
+  opponentThinking: false,
 
   setCurrentGuess: (guess: string) => {
     if (guess.length <= 4 && /^\d*$/.test(guess)) {
@@ -26,58 +33,66 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  createGame: async (mode: GameMode = 'single', playerSecret?: string) => {
+  createGame: async (
+    mode: GameMode,
+    playerSecret?: string,
+    aiDifficulty?: string
+  ) => {
     set({ loading: true, error: null });
     try {
-      const game = await gameApi.createGame(mode, playerSecret);
-      set({ game, loading: false, currentGuess: '' });
+      const game = await gameApi.createGame(mode, playerSecret, aiDifficulty);
+      set({ game, loading: false, currentGuess: "" });
     } catch (error) {
-      set({ error: 'Failed to create game', loading: false });
+      set({ error: "Failed to create game", loading: false });
     }
   },
 
   makeGuess: async (guess: string) => {
     const { game } = get();
-    if (!game || game.won || guess.length !== 4) return;
+    if (!game || game.winner_id || guess.length !== 4) return;
 
     set({ loading: true, error: null });
     try {
       const result = await gameApi.makeGuess(game.id, guess);
 
-      const newGuess: GuessRecord = {
-        guess: result.guess,
-        exact: result.exact,
-        wrong_pos: result.wrong_pos,
-      };
+      set({
+        game: {
+          ...game,
+          self_guesses: [...result.self_guesses],
+          winner_id: result.winner_id,
+          completed_at: result.completed_at,
+        },
+        currentGuess: "",
+        loading: false,
+      });
+    } catch (error) {
+      set({ error: "Failed to make guess", loading: false });
+    }
+  },
 
-      // Handle AI move if present
-      const aiGuesses = game.ai_guesses || [];
-      if (result.ai_move) {
-        aiGuesses.push({
-          guess: result.ai_move.ai_guess,
-          exact: result.ai_move.exact,
-          wrong_pos: result.ai_move.wrong_pos,
-        });
-      }
+  opponentGuess: async () => {
+    const { game } = get();
+    if (!game || game.winner_id || game.game_mode === "single") return;
+
+    set({ loading: true, error: null });
+    try {
+      const result = await gameApi.opponentGuess(game.id);
 
       set({
         game: {
           ...game,
-          guesses: [...game.guesses, newGuess],
-          ai_guesses: aiGuesses,
-          attempts: result.attempts,
-          won: result.is_winner,
-          ai_won: result.ai_move?.ai_won,
+          opponent_guesses: result.opponent_guesses,
+          winner_id: result.winner_id,
+          completed_at: result.completed_at,
         },
-        currentGuess: '',
         loading: false,
       });
     } catch (error) {
-      set({ error: 'Failed to make guess', loading: false });
+      set({ error: "Failed to get opponent's guess", loading: false });
     }
   },
 
   resetGame: () => {
-    set({ game: null, currentGuess: '', error: null });
+    set({ game: null, currentGuess: "", error: null });
   },
 }));
