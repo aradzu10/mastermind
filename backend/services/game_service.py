@@ -106,15 +106,10 @@ class GameService:
         if game.game_mode != "ai":
             raise ValueError("PvP not implemented")
 
-        if game.player1.id == user.id:
-            player = game.player1
-        else:
-            player = game.player2
-
-        history = [GuessRecord(**guess) for guess in player.guesses or []]
-        mastermind = MasterMindGame(player_secret=game.player1.secret, history=history)
+        history = [GuessRecord(**guess) for guess in game.player2.guesses or []]
+        mastermind = MasterMindGame(player_secret=game.player2.secret, history=history)
         ai_player = get_ai_player(game.ai_difficulty, mastermind)
 
         ai_guess = ai_player.get_next_guess()
         exact, wrong_pos, is_winner = mastermind.make_guess(ai_guess)
-        return await self.pvp_repo.make_guess(game, user, ai_guess, exact, wrong_pos, is_winner)
+        return await self.pvp_repo.make_guess(game, game.player2, ai_guess, exact, wrong_pos, is_winner)

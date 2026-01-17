@@ -64,6 +64,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         },
         currentGuess: "",
         loading: false,
+        opponentThinking:
+          game.game_mode !== "single" && result.winner_id === null,
       });
     } catch (error) {
       set({ error: "Failed to make guess", loading: false });
@@ -78,15 +80,26 @@ export const useGameStore = create<GameState>((set, get) => ({
     try {
       const result = await gameApi.opponentGuess(game.id);
 
-      set({
-        game: {
-          ...game,
-          opponent_guesses: result.opponent_guesses,
-          winner_id: result.winner_id,
-          completed_at: result.completed_at,
-        },
-        loading: false,
-      });
+      if (
+        (result.opponent_guesses?.length || 0) >
+          (game.opponent_guesses?.length || 0) ||
+        result.winner_id !== null
+      ) {
+        set({
+          game: {
+            ...game,
+            opponent_guesses: [...result.opponent_guesses || []],
+            winner_id: result.winner_id,
+            completed_at: result.completed_at,
+          },
+          loading: false,
+          opponentThinking: false,
+        });
+      } else {
+        set({
+          loading: false,
+        });
+      }
     } catch (error) {
       set({ error: "Failed to get opponent's guess", loading: false });
     }

@@ -1,14 +1,16 @@
-import { useState } from 'react';
-import { useGameStore } from '../../store/gameStore';
-import GuessInput from './GuessInput';
-import GuessHistory from './GuessHistory';
-import { UserBadge } from '../Auth/UserBadge';
-import { GameModeSelector } from './GameModeSelector';
-import type { GameMode } from '../../types/game';
+import { useState, useEffect, useRef } from "react";
+import { useGameStore } from "../../store/gameStore";
+import GuessInput from "./GuessInput";
+import GuessHistory from "./GuessHistory";
+import { UserBadge } from "../Auth/UserBadge";
+import { GameModeSelector } from "./GameModeSelector";
+import type { GameMode } from "../../types/game";
 
 export default function GameBoard() {
-  const { game, loading, error, createGame, resetGame } = useGameStore();
+  const { game, loading, error, createGame, resetGame, opponentGuess, opponentThinking } =
+    useGameStore();
   const [showModeSelector, setShowModeSelector] = useState(!game);
+  const previousOpponentGuessCountRef = useRef(0);
 
   const handleStartGame = async (mode: GameMode, playerSecret?: string) => {
     await createGame(mode, playerSecret, mode === "ai" ? "easy" : undefined);
@@ -19,6 +21,22 @@ export default function GameBoard() {
     resetGame();
     setShowModeSelector(true);
   };
+
+  useEffect(() => {
+    if (!game || game.game_mode === "single" || game.winner_id !== null) {
+      return;
+    }
+
+    if (opponentThinking) {
+      opponentGuess();
+
+      const pollInterval = setInterval(() => {
+        opponentGuess();
+      }, 10000);
+
+      return () => clearInterval(pollInterval);
+    }
+  }, [opponentThinking]);
 
   // Show mode selector if no game
   if (showModeSelector || (!game && !loading)) {
@@ -50,7 +68,7 @@ export default function GameBoard() {
   }
 
   const isPvPMode = game?.game_mode !== "single";
-  const opponentEmoji = (game?.game_mode === "ai" ? "🤖" : "");
+  const opponentEmoji = game?.game_mode === "ai" ? "🤖" : "";
   const playerWon = game?.winner_id === game?.self_id;
   const opponentWon = game?.winner_id === game?.opponent_id;
   const gameOver = game?.winner_id !== null;
@@ -73,7 +91,6 @@ export default function GameBoard() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold">
-                  Mastermind -{" "}
                   {isPvPMode
                     ? `You ⚔️ ${game?.opponent_name} ${opponentEmoji}`
                     : "🎯 Single Player"}
@@ -173,11 +190,14 @@ export default function GameBoard() {
                   </div>
 
                   <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                    <p className="text-sm text-purple-700">
-                      {gameOver
-                        ? `Your secret: ${game.self_secret}`
-                        : "Your secret is hidden"}
-                    </p>
+                    <div className="flex items-baseline gap-3">
+                      <p className="text-sm text-purple-700 mb-1 font-semibold">
+                        Your Secret Code:
+                      </p>
+                      <p className="text-xl font-mono font-bold text-purple-900 tracking-wider">
+                        {game.opponent_secret}
+                      </p>
+                    </div>
                   </div>
 
                   <GuessHistory
