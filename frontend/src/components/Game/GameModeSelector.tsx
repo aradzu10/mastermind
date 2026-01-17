@@ -117,7 +117,7 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
                       className="w-4 h-4 text-purple-600"
                     />
                     <span className="text-sm text-gray-700">
-                      Easy (Brad, ELO 800)
+                      Brad (ELO 200)
                     </span>
                   </label>
                   <label className="flex items-center space-x-2 cursor-pointer">
@@ -130,7 +130,7 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
                       className="w-4 h-4 text-purple-600"
                     />
                     <span className="text-sm text-gray-700">
-                      Hard (AradzBot, ELO 2000)
+                      AradzBot (ELO 2000)
                     </span>
                   </label>
                 </div>

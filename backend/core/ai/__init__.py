@@ -1,6 +1,6 @@
+from backend.core.ai.aradz_bot import AradzBot
 from backend.core.ai.base_ai import BaseAI
 from backend.core.ai.random_ai import RandomAI
-from backend.core.ai.aradz_bot import AradzBot
 from backend.core.game_engine import MasterMindGame
 
 

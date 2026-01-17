@@ -52,12 +52,12 @@ class GameService:
         player_game = MasterMindGame()
         ai_game = MasterMindGame(player_secret)
         ai_player = get_ai_player(ai_difficulty, ai_game)
+
         return await self.pvp_repo.create_ai_game(
             user,
             player_game.secret,
+            ai_player.user(),
             ai_player.master_mind_game.secret,
-            ai_name=ai_player.name,
-            ai_elo=ai_player.elo,
             ai_difficulty=ai_difficulty,
         )
 
@@ -79,6 +79,11 @@ class GameService:
         if game.completed_at is not None:
             raise ValueError("Game is already completed")
 
+        # For PvP games, validate it's the player's turn
+        if game.game_mode == "pvp":
+            if game.current_turn != user.id:
+                raise ValueError("It's not your turn")
+
         if game.game_mode == "single":
             player = game.player
             repo = self.single_repo
@@ -97,6 +102,12 @@ class GameService:
 
         exact, wrong_pos, is_winner = mastermind.make_guess(guess_str)
         game = await repo.make_guess(game, user, guess_str, exact, wrong_pos, is_winner)
+
+        # Toggle turn for PvP games (only if game is still ongoing)
+        if game.game_mode == "pvp" and game.winner_id is None:
+            game.current_turn = game.player2.id if game.player1.id == game.current_turn else game.player1.id
+            await self.pvp_repo.session.commit()
+            await self.pvp_repo.session.refresh(game)
 
         # Update ELO for PvP games when someone wins
         if is_winner and game.game_mode == "pvp":

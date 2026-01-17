@@ -8,12 +8,23 @@ import { WaitingForMatch } from "./WaitingForMatch";
 import type { GameMode } from "../../types/game";
 
 export default function GameBoard() {
-  const { game, loading, error, createGame, resetGame, opponentGuess, opponentThinking } =
-    useGameStore();
+  const {
+    game,
+    loading,
+    error,
+    createGame,
+    resetGame,
+    opponentGuess,
+    opponentThinking,
+  } = useGameStore();
   const [showModeSelector, setShowModeSelector] = useState(!game);
-  const previousOpponentGuessCountRef = useRef(0);
+  const gameRef = useRef(game);
 
-  const handleStartGame = async (mode: GameMode, playerSecret?: string, aiDifficulty?: string) => {
+  const handleStartGame = async (
+    mode: GameMode,
+    playerSecret?: string,
+    aiDifficulty?: string
+  ) => {
     await createGame(mode, playerSecret, aiDifficulty);
     setShowModeSelector(false);
   };
@@ -24,16 +35,23 @@ export default function GameBoard() {
   };
 
   useEffect(() => {
-    if (!game || game.game_mode === "single" || game.winner_id !== null) {
-      return;
-    }
+    gameRef.current = game;
+  }, [game]);
 
+  useEffect(() => {
     if (opponentThinking) {
-      opponentGuess();
+      const tick = () => {
+        const currentGame = gameRef.current;
+        if (currentGame && currentGame.winner_id === null && opponentThinking) {
+          opponentGuess();
+        }
+      };
+
+      tick();
 
       const pollInterval = setInterval(() => {
-        opponentGuess();
-      }, 10000);
+        tick();
+      }, 1000);
 
       return () => clearInterval(pollInterval);
     }
@@ -45,11 +63,11 @@ export default function GameBoard() {
   }
 
   // Show waiting screen for PvP games that haven't started
-  if (game && game.game_mode === 'pvp' && game.status === 'waiting') {
+  if (game && game.game_mode === "pvp" && game.status === "waiting") {
     return (
       <WaitingForMatch
         gameId={game.id}
-        playerSecret={game.opponent_secret || ''}
+        playerSecret={game.opponent_secret || ""}
         onCancel={handleNewGame}
       />
     );
@@ -84,6 +102,10 @@ export default function GameBoard() {
   const playerWon = game?.winner_id === game?.self_id;
   const opponentWon = game?.winner_id === game?.opponent_id;
   const gameOver = game?.winner_id !== null;
+
+  // Calculate if it's the player's turn
+  const isPlayerTurn =
+    game?.game_mode === "pvp" ? game?.current_turn === game?.self_id : true;
 
   if (!game) {
     return null;
@@ -177,7 +199,32 @@ export default function GameBoard() {
                     )}
                   </div>
 
-                  <GuessInput disabled={gameOver} />
+                  <GuessInput
+                    disabled={
+                      gameOver || (game.game_mode === "pvp" && !isPlayerTurn)
+                    }
+                  />
+                  {/* {!gameOver && game.game_mode === "pvp" && !isPlayerTurn && (
+                    <div className="mt-2 flex items-center space-x-2 text-indigo-600">
+                      <div className="flex space-x-1">
+                        <div
+                          className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"
+                          style={{ animationDelay: "0ms" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"
+                          style={{ animationDelay: "150ms" }}
+                        ></div>
+                        <div
+                          className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"
+                          style={{ animationDelay: "300ms" }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-medium">
+                        Waiting for opponent's turn...
+                      </span>
+                    </div>
+                  )} */}
                   <GuessHistory
                     guesses={game.self_guesses}
                     title="Your Guesses"
@@ -212,9 +259,18 @@ export default function GameBoard() {
                     {!gameOver && opponentThinking && (
                       <div className="mt-2 flex items-center space-x-2 text-purple-600">
                         <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                          <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                          <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                          <div
+                            className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"
+                            style={{ animationDelay: "0ms" }}
+                          ></div>
+                          <div
+                            className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"
+                            style={{ animationDelay: "150ms" }}
+                          ></div>
+                          <div
+                            className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"
+                            style={{ animationDelay: "300ms" }}
+                          ></div>
                         </div>
                         <span className="text-sm font-medium">Thinking...</span>
                       </div>

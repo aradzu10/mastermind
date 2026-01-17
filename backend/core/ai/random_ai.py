@@ -2,6 +2,7 @@ import random
 
 from backend.core.ai.base_ai import BaseAI
 from backend.core.game_engine import MasterMindGame
+from backend.db.models.user import User
 
 
 class RandomAI(BaseAI):
@@ -9,13 +10,16 @@ class RandomAI(BaseAI):
         super().__init__(master_mind_game)
         self.used_guesses = set(g.guess for g in self.master_mind_game.history)
 
-    @property
-    def name(self) -> str:
-        return "Brad"
-
-    @property
-    def elo(self) -> int:
-        return 200
+    @staticmethod
+    def user() -> User:
+        return User(
+            id=1,
+            email="random_bot@ai.mastermind",
+            google_id=None,
+            display_name="Brad",
+            is_guest=False,
+            elo_rating=200.0,
+        )
 
     def get_next_guess(self) -> str:
         max_attempts = 100

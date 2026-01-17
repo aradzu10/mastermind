@@ -1,6 +1,8 @@
 import random
+
 from backend.core.ai.base_ai import BaseAI
 from backend.core.game_engine import MasterMindGame
+from backend.db.models.user import User
 
 
 class AradzBot(BaseAI):
@@ -12,13 +14,16 @@ class AradzBot(BaseAI):
     def __init__(self, master_mind_game: MasterMindGame):
         super().__init__(master_mind_game)
 
-    @property
-    def name(self) -> str:
-        return "AradzBot"
-
-    @property
-    def elo(self) -> int:
-        return 2000
+    @staticmethod
+    def user() -> User:
+        return User(
+            id=0,
+            email="aradz@ai.mastermind",
+            google_id=None,
+            display_name="Aradz",
+            is_guest=False,
+            elo_rating=2000.0,
+        )
 
     def get_next_guess(self) -> str:
         """

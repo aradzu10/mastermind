@@ -1,3 +1,4 @@
+import random
 from datetime import datetime
 from typing import List
 
@@ -8,7 +9,6 @@ from sqlalchemy.orm import selectin_polymorphic
 from backend.db.models.game import Game, PlayerState, PvPGame, SingleGame
 from backend.db.models.user import User
 from backend.db.repositories.base import BaseRepository
-from backend.schemas import game
 
 
 class GameRepository(BaseRepository[Game]):
@@ -132,6 +132,10 @@ class PvPGameRepository(BaseRepository[PvPGame]):
         game.player2 = player2
         game.status = "in_progress"  # type: ignore
         game.started_at = datetime.utcnow()  # type: ignore
+        if random.choice([1, 2]) == 1:
+            game.current_turn = player1.id  # type: ignore
+        else:
+            game.current_turn = player2.id  # type: ignore
         await self.session.flush()
         await self.session.refresh(game)
         return game
@@ -140,9 +144,8 @@ class PvPGameRepository(BaseRepository[PvPGame]):
         self,
         user: User,
         user_secret: str,
+        ai_user: User,
         ai_secret: str,
-        ai_name: str,
-        ai_elo: int,
         ai_difficulty: str,
     ) -> PvPGame:  # type: ignore
         player1 = PlayerState(
@@ -153,11 +156,11 @@ class PvPGameRepository(BaseRepository[PvPGame]):
             elo=user.elo_rating,  # type: ignore
         )
         player2 = PlayerState(
-            id=None,  # type: ignore
-            name=ai_name,
+            id=ai_user.id,  # type: ignore
+            name=ai_user.display_name,  # type: ignore
             secret=ai_secret,
             guesses=[],
-            elo=ai_elo,
+            elo=ai_user.elo_rating,  # type: ignore
         )
         return await super().create(
             player1=player1,

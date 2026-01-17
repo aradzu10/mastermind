@@ -42,7 +42,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const game = await gameApi.createGame(mode, playerSecret, aiDifficulty);
-      set({ game, loading: false, currentGuess: "" });
+      set({
+        game,
+        loading: false,
+        currentGuess: "",
+        opponentThinking: game.current_turn === game.opponent_id,
+      });
     } catch (error) {
       set({ error: "Failed to create game", loading: false });
     }
@@ -73,6 +78,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           self_guesses: [...result.self_guesses],
           winner_id: result.winner_id,
           completed_at: result.completed_at,
+          current_turn: result.current_turn,
         },
         currentGuess: "",
         loading: false,
@@ -88,7 +94,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { game } = get();
     if (!game || game.winner_id || game.game_mode === "single") return;
 
-    set({ loading: true, error: null });
+    // set({ loading: true, error: null });
     try {
       const result = await gameApi.opponentGuess(game.id);
 
@@ -100,17 +106,18 @@ export const useGameStore = create<GameState>((set, get) => ({
         set({
           game: {
             ...game,
-            opponent_guesses: [...result.opponent_guesses || []],
+            opponent_guesses: [...(result.opponent_guesses || [])],
             winner_id: result.winner_id,
             completed_at: result.completed_at,
+            current_turn: result.current_turn,
           },
           loading: false,
           opponentThinking: false,
         });
       } else {
-        set({
-          loading: false,
-        });
+        // set({
+        //   loading: false,
+        // });
       }
     } catch (error) {
       set({ error: "Failed to get opponent's guess", loading: false });

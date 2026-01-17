@@ -25,8 +25,6 @@ async def get_current_user(
     token = credentials.credentials
     auth_service = AuthService(db)
     user = await auth_service.get_current_user(token)
-    print("token", token)
-    print("user", user)
 
     if user is None:
         raise HTTPException(
@@ -35,7 +33,6 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    print("HEEHEHEH")
     return user
 
 

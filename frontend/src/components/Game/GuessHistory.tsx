@@ -12,7 +12,7 @@ export default function GuessHistory({ guesses, title = "Guess History", isOppon
       <div className="space-y-2">
         <h3 className="text-lg font-semibold mb-4">{title}</h3>
         <div className="text-gray-500 text-center py-8 bg-gray-50 rounded-lg">
-          {isOpponent ? 'AI hasn\'t made any guesses yet' : 'No guesses yet. Start by entering a 4-digit number!'}
+          {"No guesses yet"}
         </div>
       </div>
     );

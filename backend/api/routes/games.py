@@ -54,7 +54,6 @@ async def create_new_game(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    print("here")
     service = GameService(db)
     try:
         game = await service.create_game(
