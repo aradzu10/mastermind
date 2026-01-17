@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { useAuthStore } from "../../store/authStore";
 import type { Game } from "../../types/game";
 
 interface GameOverScreenProps {
@@ -10,11 +9,10 @@ interface GameOverScreenProps {
 
 export function GameOverScreen({ game, onExit }: GameOverScreenProps) {
   const [animatingElo, setAnimatingElo] = useState(false);
-  
-  // Capture the initial ELO value once and keep it fixed
-  const initialEloRef = useRef(game.self_elo);
-  const oldElo = initialEloRef.current || -1;
-  
+
+  // Use the old ELO stored before game completion
+  const oldElo = game.old_self_elo ?? -1;
+
   const [displayElo, setDisplayElo] = useState(oldElo);
   const [newElo, setNewElo] = useState(oldElo);
   const [eloChange, setEloChange] = useState(0);

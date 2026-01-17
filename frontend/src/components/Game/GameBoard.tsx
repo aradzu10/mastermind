@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useGameStore } from "../../store/gameStore";
-import { useAuthStore } from "../../store/authStore";
 import GuessInput from "./GuessInput";
 import GuessHistory from "./GuessHistory";
 import { UserBadge } from "../Auth/UserBadge";

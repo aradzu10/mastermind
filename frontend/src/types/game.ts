@@ -10,9 +10,10 @@ export interface Game {
 
   self_id: number;
   self_name: string;
-  self_secret: string | null;  // Hidden until game over
+  self_secret: string | null; // Hidden until game over
   self_guesses: GuessRecord[];
   self_elo?: number;
+  old_self_elo?: number; // ELO before game completion
 
   winner_id: number | null;
   created_at: string;
@@ -24,8 +25,9 @@ export interface Game {
   opponent_secret?: string | null;
   opponent_guesses?: GuessRecord[];
   opponent_elo?: number;
+  old_opponent_elo?: number; // ELO before game completion
   current_turn?: number;
-  status?: 'waiting' | 'in_progress' | 'completed';
+  status?: "waiting" | "in_progress" | "completed";
   started_at?: string;
 
   // AI specific fields
