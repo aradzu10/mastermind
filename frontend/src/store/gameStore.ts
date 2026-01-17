@@ -46,7 +46,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         game,
         loading: false,
         currentGuess: "",
-        opponentThinking: game.current_turn === game.opponent_id,
+        opponentThinking:
+          game.opponent_id === undefined ? false : game.current_turn === game.opponent_id,
       });
     } catch (error) {
       set({ error: "Failed to create game", loading: false });
@@ -76,6 +77,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         game: {
           ...game,
           self_guesses: [...result.self_guesses],
+          self_elo: result.self_elo,
+          self_secret: result.self_secret,
+          opponent_elo: result.opponent_elo,
           winner_id: result.winner_id,
           completed_at: result.completed_at,
           current_turn: result.current_turn,
@@ -103,10 +107,15 @@ export const useGameStore = create<GameState>((set, get) => ({
           (game.opponent_guesses?.length || 0) ||
         result.winner_id !== null
       ) {
+        console.log(result);
+        console.log(game);
         set({
           game: {
             ...game,
             opponent_guesses: [...(result.opponent_guesses || [])],
+            self_elo: result.self_elo,
+            self_secret: result.self_secret,
+            opponent_elo: result.opponent_elo,
             winner_id: result.winner_id,
             completed_at: result.completed_at,
             current_turn: result.current_turn,

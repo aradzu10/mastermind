@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuthStore } from '../../store/authStore';
 import type { GameMode } from '../../types/game';
 
 interface GameModeSelectorProps {
@@ -6,10 +7,16 @@ interface GameModeSelectorProps {
 }
 
 export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
+  const { user, checkAuth, logout } = useAuthStore();
   const [selectedMode, setSelectedMode] = useState<GameMode>('single');
   const [playerSecret, setPlayerSecret] = useState('');
   const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'hard'>('easy');
   const [error, setError] = useState('');
+
+  // Refresh user data when component mounts to get latest ELO
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
   const handleStartGame = () => {
     // Validate secret if provided
@@ -42,6 +49,36 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
         <h1 className="text-4xl font-bold text-center mb-2 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
           Mastermind
         </h1>
+
+        {/* User Info Display */}
+        {user && (
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 mb-4 border border-indigo-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="text-2xl">👤</span>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">{user.display_name}</p>
+                  <p className="text-xs text-gray-600">Player</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-600">ELO Rating</p>
+                <p className="text-xl font-bold text-indigo-600">{user.elo_rating}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Logout Button */}
+        {user && (
+          <button
+            onClick={logout}
+            className="w-full mb-4 py-2 px-4 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors border border-gray-300"
+          >
+            Logout
+          </button>
+        )}
+
         <p className="text-center text-gray-600 mb-8">Choose your game mode</p>
 
         <div className="space-y-4 mb-6">

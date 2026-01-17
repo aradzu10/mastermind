@@ -90,14 +90,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       return;
     }
 
-    set({ loading: true });
     try {
       const user = await authApi.getCurrentUser();
       set({
         user,
         token,
         isAuthenticated: true,
-        loading: false,
       });
     } catch (error) {
       // Token is invalid, clear auth
@@ -107,7 +105,6 @@ export const useAuthStore = create<AuthState>((set) => ({
         user: null,
         token: null,
         isAuthenticated: false,
-        loading: false,
       });
     }
   },

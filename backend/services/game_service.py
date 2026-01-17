@@ -137,9 +137,16 @@ class GameService:
         raise ValueError(f"Unknown game mode: {game.game_mode}")
 
     async def _update_pvp_elo(self, game: Game, winner: User) -> None:
-        winner.elo_rating += 20
+        if game.player1.id == winner.id:
+            loser_id = game.player2.id
+            game.player1.elo += 20
+            game.player2.elo = max(0, game.player2.elo - 10)
+        else:
+            loser_id = game.player1.id
+            game.player2.elo += 20
+            game.player1.elo = max(0, game.player1.elo - 10)
 
-        loser_id = game.player2.id if game.player1.id == winner.id else game.player1.id
+        winner.elo_rating += 20
         loser = await self.user_repo.get_by_id(loser_id)
         if loser:
             loser.elo_rating = max(0, loser.elo_rating - 10)  # Don't go below 0

@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useGameStore } from "../../store/gameStore";
+import { useAuthStore } from "../../store/authStore";
 import GuessInput from "./GuessInput";
 import GuessHistory from "./GuessHistory";
 import { UserBadge } from "../Auth/UserBadge";
 import { GameModeSelector } from "./GameModeSelector";
 import { WaitingForMatch } from "./WaitingForMatch";
+import { MatchFoundScreen } from "./MatchFoundScreen";
+import { GameOverScreen } from "./GameOverScreen";
 import type { GameMode } from "../../types/game";
 
 export default function GameBoard() {
@@ -18,6 +21,9 @@ export default function GameBoard() {
     opponentThinking,
   } = useGameStore();
   const [showModeSelector, setShowModeSelector] = useState(!game);
+  const [showWaitingScreen, setShowWaitingScreen] = useState(false);
+  const [showMatchFound, setShowMatchFound] = useState(false);
+  const [debugTrigger, setDebugTrigger] = useState(0);
   const gameRef = useRef(game);
 
   const handleStartGame = async (
@@ -27,16 +33,33 @@ export default function GameBoard() {
   ) => {
     await createGame(mode, playerSecret, aiDifficulty);
     setShowModeSelector(false);
+    setShowWaitingScreen(true); // Always show waiting screen first
   };
 
-  const handleNewGame = () => {
+  const handleNewGame = async () => {
     resetGame();
     setShowModeSelector(true);
+    setShowWaitingScreen(false);
+    setShowMatchFound(false);
+  };
+
+  const handleMatchFound = () => {
+    setShowWaitingScreen(false);
+    setShowMatchFound(true);
+  };
+
+  const handleMatchComplete = () => {
+    setShowMatchFound(false);
   };
 
   useEffect(() => {
     gameRef.current = game;
   }, [game]);
+
+  useEffect(() => {
+    // Debug effect - does nothing
+    const x = 1;
+  }, [debugTrigger]);
 
   useEffect(() => {
     if (opponentThinking) {
@@ -62,13 +85,25 @@ export default function GameBoard() {
     return <GameModeSelector onStartGame={handleStartGame} />;
   }
 
-  // Show waiting screen for PvP games that haven't started
-  if (game && game.game_mode === "pvp" && game.status === "waiting") {
+  // Show waiting screen (for both AI and PvP)
+  if (showWaitingScreen && game) {
     return (
       <WaitingForMatch
         gameId={game.id}
         playerSecret={game.opponent_secret || ""}
+        onMatchFound={handleMatchFound}
         onCancel={handleNewGame}
+        isAI={game.game_mode === 'ai'}
+      />
+    );
+  }
+
+  // Show match found screen
+  if (showMatchFound && game) {
+    return (
+      <MatchFoundScreen
+        game={game}
+        onComplete={handleMatchComplete}
       />
     );
   }
@@ -130,44 +165,24 @@ export default function GameBoard() {
                     : "🎯 Single Player"}
                 </h1>
               </div>
-              <button
-                onClick={handleNewGame}
-                className="px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold
-                         hover:bg-indigo-50 transition-colors shadow-md"
-              >
-                New Game
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setDebugTrigger(prev => prev + 1)}
+                  className="px-6 py-3 bg-yellow-500 text-white rounded-lg font-semibold
+                           hover:bg-yellow-600 transition-colors shadow-md"
+                >
+                  Debug
+                </button>
+                <button
+                  onClick={handleNewGame}
+                  className="px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold
+                           hover:bg-indigo-50 transition-colors shadow-md"
+                >
+                  New Game
+                </button>
+              </div>
             </div>
           </div>
-
-          {/* Game Over Message */}
-          {gameOver && (
-            <div
-              className={`p-4 ${playerWon ? "bg-green-100 border-green-300" : opponentWon ? "bg-red-100 border-red-300" : "bg-blue-100 border-blue-300"} border-b-2`}
-            >
-              <div
-                className={`font-semibold text-lg ${playerWon ? "text-green-800" : opponentWon ? "text-red-800" : "text-blue-800"}`}
-              >
-                {playerWon &&
-                  !opponentWon &&
-                  `🎉 You won in ${game.self_guesses.length} attempts!`}
-                {opponentWon &&
-                  !playerWon &&
-                  `😔 Opponent won! It guessed your code in ${game.opponent_guesses?.length || 0} attempts.`}
-                {playerWon &&
-                  opponentWon &&
-                  `🤝 It's a tie! You both guessed the codes!`}
-              </div>
-              {game.self_secret && (
-                <p className="text-sm text-gray-700 mt-2">
-                  Your secret was:{" "}
-                  <span className="font-mono font-bold text-lg">
-                    {game.self_secret}
-                  </span>
-                </p>
-              )}
-            </div>
-          )}
 
           <div className="p-8">
             {isPvPMode ? (
@@ -313,6 +328,14 @@ export default function GameBoard() {
             )}
           </div>
         </div>
+
+        {/* Game Over Screen Overlay */}
+        {gameOver && (
+          <GameOverScreen
+            game={game}
+            onExit={handleNewGame}
+          />
+        )}
       </div>
     </div>
   );

@@ -162,6 +162,8 @@ class PvPGameRepository(BaseRepository[PvPGame]):
             guesses=[],
             elo=ai_user.elo_rating,  # type: ignore
         )
+        print("ARAD", ai_secret)
+        print("ARAD", user_secret)
         return await super().create(
             player1=player1,
             player2=player2,
@@ -169,6 +171,7 @@ class PvPGameRepository(BaseRepository[PvPGame]):
             game_mode="ai",
             ai_difficulty=ai_difficulty,
             started_at=datetime.utcnow(),
+            current_turn=player1.id,  # type: ignore
         )
 
     async def get_waiting_games(self) -> list[PvPGame]:
