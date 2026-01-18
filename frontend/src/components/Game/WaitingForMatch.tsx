@@ -100,7 +100,7 @@ export function WaitingForMatch({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen h-screen overflow-y-scroll bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
         {/* FIX: Changed text-4xl to text-2xl sm:text-4xl and added pb-1 */}
         <h1 className="text-2xl sm:text-4xl font-bold mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent pb-1">

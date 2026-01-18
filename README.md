@@ -1,94 +1,85 @@
-# Master Mind Game
+# Mastermind
 
-A simple implementation of the Master Mind board game in Python.
+A web-based implementation of the classic code-breaking game.
 
-## How to Play
+## What You Can Do
 
-The computer thinks of a 4-digit number (duplicates allowed).
-You try to guess it and receive feedback:
+**Three game modes:**
+- **Single Player** - Break the computer's secret code at your own pace
+- **AI Opponent** - Race against a bot to see who cracks the code first
+- **Player vs Player** - Real-time matchmaking against other players
 
-- `+` = correct digit in correct position
-- `~` = correct digit in wrong position
-- `-` means no correct digits
+**AI opponents** come in two flavors:
+- **Brad** (ELO 200) - Makes random guesses
+- **AradzBot** (ELO 2000) - Uses constraint-solving to systematically eliminate possibilities
 
-Try to guess the number in as few attempts as possible!
+**No signup required.** Play as a guest with just a display name. Your ELO rating updates after each competitive game (AI or PvP). Win against harder opponents to climb faster.
 
-## Example
+## Screenshots
 
-```
-Computer thinks: 5567 (hidden)
+**Game Selection**
 
-Your guess: 1234
-Feedback: -        (Nothing match)
+<img src="images/game_start.gif" alt="AI Game Selection" height="300"/>
 
-Your guess: 4589
-Feedback: +        (5 is correct position)
 
-Your guess: 5678
-Feedback: +~~      (5 correct position, 6 and 7 wrong positions)
-```
+**Active Game**
 
-## Winning
+<img src="images/pvp.gif" alt="Active Game" height="300"/>
 
+
+## How It Works
+
+Frontend uses React with TypeScript, styled with Tailwind CSS. State management through Zustand, with Framer Motion for animations.
+
+Backend is FastAPI with a Service-Repository-Model pattern. Services handle game logic and AI opponents, repositories manage database access, and SQLAlchemy models define the schema. PostgreSQL stores users, games, and ELO ratings.
+
+The app runs in Docker containers: PostgreSQL, FastAPI backend, and Nginx serving the React frontend.
+
+## Running It
+
+**Production:**
 ```bash
-Attempt #8
-Enter your guess (4 digits): 6521
-------------------------------
-0123    +~
-4567    +~
-6701    ++
-2244    ~
-3344    -
-2015    ~~~
-2156    ~~~~
-6521    ++++
-------------------------------
-Enter your name: aradz
-
-🎉 You won! The number was 6521
-You guessed it in 8 attempts!
-🏆 NEW HIGH SCORE! 🏆
+docker-compose up -d
 ```
+Access at `http://localhost`
 
-## Running the Game
-
+**Development:**
 ```bash
-python mastermind.py
+./dev.sh
 ```
+The dev script handles everything: starts PostgreSQL in Docker, runs migrations, seeds AI users, launches the FastAPI backend (port 8000) and Vite dev server (port 5173).
+
+Access at `http://localhost:5173`
 
 # Final Project
 
-For the final project, I will expand it in several ways.
-1. Create a Web version for playing the game.
-2. Play against AI - multiple hardnest levels.
-3. Allow multiplayer game - 1 vs 1.
-4. Add Users and Ranking.
+For the final project, the game was expanded in several ways:
+1. ✓ Create a Web version for playing the game.
+2. ✓ Play against AI - multiple hardness levels.
+3. ✓ Allow multiplayer game - 1 vs 1.
+4. ✓ Add Users and Ranking.
+5. ✓ Dockerize everything.
 
 ## Final Project: Enhanced Game Features
 
 This project transitions the game from a local prototype to a full-featured web application.
 
-
-### 1. Web Deployment
+### ✓ 1. Web Deployment
 
 Porting the game engine to a web-compatible framework for browser accessibility.
 
-### 2. Adaptive AI
+### ✓ 2. Adaptive AI
 
 Development of an AI engine with three difficulty tiers:
 
 * **Easy:** Random moves.
-* **Medium:** Heuristic-based tactics.
-* **Hard:** Minimax algorithm for deep strategic play.
+* **Hard:** Constraint-solving for deep strategy.
 
-### 3. Real-Time Multiplayer
+### ✓ 3. Real-Time Multiplayer
 
-Integration of **WebSockets** to enable 1v1 remote play. This includes server-side state validation to prevent cheating and a lobby system for matchmaking.
+Enable 1v1 remote play. This includes server-side state validation to prevent cheating and a lobby system for matchmaking.
 
-The design should be, that once the player got connected, the server don't need to know them until the finish with the game.
-Then it will check for cheating, and if someone cheat, it automatically looses.
-
-### 4. User System & Ranking
+### ✓ 4. User System & Ranking
 
 A backend infrastructure to manage the competitive ecosystem:
 
@@ -96,7 +87,6 @@ A backend infrastructure to manage the competitive ecosystem:
 * **Database:** Persistent storage for profiles and match history.
 * **Ranking:** A global Leaderboard based on an ELO ranking system.
 
-### 5. Dockerize everything
+### ✓ 5. Dockerize everything
 
-Make everything dockerize, that I could just run my docker and get a real website. Including the databases.
-Still allow for local testing.
+Make everything in container.

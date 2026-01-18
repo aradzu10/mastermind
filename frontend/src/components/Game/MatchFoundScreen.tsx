@@ -29,7 +29,7 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
     : "Don't worry, you will get a free random guess";
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 overflow-hidden">
+    <div className="flex flex-col items-center justify-center min-h-screen h-screen overflow-y-scroll bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 overflow-hidden">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
