@@ -82,6 +82,7 @@ class PvPGame(Game):
     game_mode = Column(String, nullable=False)
     ai_difficulty = Column(String, nullable=True)
     current_turn = Column(Integer, default=1, nullable=False)
+    starter_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     winner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     status = Column(String, default="waiting", nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

@@ -43,6 +43,7 @@ class GameResponse(BaseModel):
     opponent_guesses: Optional[List[GuessRecord]]
     opponent_elo: Optional[int]
     current_turn: Optional[int]
+    starter_id: Optional[int]
     status: Optional[str]
     started_at: Optional[datetime]
 

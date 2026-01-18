@@ -34,13 +34,13 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center flex flex-col items-center"
+        className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full text-center flex flex-col items-center"
       >
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.3 }}
-          className="text-3xl font-bold mb-8 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
+          className="text-3xl font-bold mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
         >
           Match Found!
         </motion.h1>
@@ -50,7 +50,7 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3, duration: 0.3 }}
-          className="w-full mb-4"
+          className="w-full mb-2"
         >
           <p className="text-2xl font-bold text-gray-800">{opponentName}</p>
           {game.opponent_elo && (
@@ -58,24 +58,26 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
           )}
         </motion.div>
 
-        {/* CENTERPIECE CONTAINER 
-           Holds both Sword and Banner in the same coordinate space.
+        {/* ANIMATION CONTAINER 
+            w-full: Ensures the center point is the true center of the card.
+            h-40: Reserves vertical space so elements don't jump around.
         */}
-        <div className="relative flex items-center justify-center w-full my-8 h-32">
-          
-          {/* 1. SWORDS (Layer 0) 
-             Positioned relative so they take up space, but z-0 puts them behind the banner.
-          */}
+        <div className="relative w-full h-40 flex items-center justify-center">
+          {/* SWORDS */}
           <motion.div
-            className="relative z-0 text-8xl"
+            className="relative z-0 text-8xl leading-none"
             initial={{ rotate: 0, scale: 1 }}
             animate={{
-              rotate: [0, 720, 720, 720], // 720 degrees = 2 full rounds
+              rotate: [0, 720, 720, 720],
               scale: [1, 1, 3, 1],
             }}
             transition={{
-              duration: 3, // Slower duration
-              times: [0, 0.2, 0.8, 1], // Adjusts when the spin/scale happens
+              duration: 4.5, // Total animation time (Slower)
+              // [Start, Spin Start, Shrink Start, End]
+              // 0 -> 0.1: Initial delay
+              // 0.1 -> 0.9: Grow and Rotate (Slow)
+              // 0.9 -> 1.0: Snap back to small (Fast)
+              times: [0, 0.1, 0.9, 1],
               ease: "easeInOut",
             }}
             onAnimationComplete={() => {
@@ -87,21 +89,21 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
             ⚔️
           </motion.div>
 
-          {/* 2. BANNER (Layer 1)
-             Absolute positioning centers it perfectly ON TOP of the swords.
-             z-50 ensures it stays on top even when swords scale up.
+          {/* BANNER 
+             absolute top-1/2 left-1/2: Centers specifically within the w-full parent.
+             bg-opacity/40: Much more transparent.
           */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.4 }}
-            className="absolute z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-[90%]"
+            className="absolute z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full px-4"
           >
-            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg shadow-lg bg-opacity-90 backdrop-blur-sm">
+            <div className="mx-auto max-w-[90%] bg-gradient-to-r from-purple-600/40 to-indigo-600/40 backdrop-blur-md text-white px-6 py-3 rounded-lg shadow-lg border border-white/10">
               <p className="text-xl font-bold text-center whitespace-nowrap">
                 {turnMessage}
               </p>
-              <p className="text-xs text-center opacity-90 mt-1">
+              <p className="text-xs text-center opacity-90 mt-1 font-medium">
                 {freeGuessMessage}
               </p>
             </div>
@@ -113,7 +115,7 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3, duration: 0.3 }}
-          className="w-full mt-4"
+          className="w-full mt-2"
         >
           <p className="text-2xl font-bold text-gray-800">{game.self_name}</p>
           {game.self_elo && (

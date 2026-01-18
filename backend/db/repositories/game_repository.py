@@ -88,6 +88,7 @@ class PvPGameRepository(BaseRepository[PvPGame]):
         game.status = "in_progress"  # type: ignore
         game.started_at = datetime.utcnow()  # type: ignore
         game.current_turn = current_turn  # type: ignore
+        game.starter_id = current_turn  # type: ignore
 
         await self.session.flush()
         await self.session.refresh(game)
@@ -104,6 +105,7 @@ class PvPGameRepository(BaseRepository[PvPGame]):
             ai_difficulty=ai_difficulty,
             started_at=datetime.utcnow(),
             current_turn=current_turn,  # type: ignore
+            starter_id=current_turn,  # type: ignore
         )
 
     async def get_waiting_games(self) -> list[PvPGame]:
@@ -126,7 +128,8 @@ class PvPGameRepository(BaseRepository[PvPGame]):
     ) -> PvPGame:
         if winner_id is not None:
             await self._finish_game(game, winner_id=winner_id, status="completed")
-            await self._update_elo(player1, player2, winner_id)
+            if game.game_mode != "ai":
+                await self._update_elo(player1, player2, winner_id)
         else:
             game.current_turn = player2.id if game.current_turn == player1.id else player1.id
 
@@ -142,7 +145,8 @@ class PvPGameRepository(BaseRepository[PvPGame]):
         await self._finish_game(game, winner_id=winner_id, status="abandoned")
         player1 = PlayerState(**dataclasses.asdict(game.player1))
         player2 = PlayerState(**dataclasses.asdict(game.player2))
-        await self._update_elo(player1, player2, winner_id)
+        if game.game_mode != "ai":
+            await self._update_elo(player1, player2, winner_id)
 
         game.player1 = player1
         game.player2 = player2

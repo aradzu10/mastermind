@@ -246,30 +246,11 @@ export default function GameBoard() {
                       gameOver || (game.game_mode === "pvp" && !isPlayerTurn)
                     }
                   />
-                  {/* {!gameOver && game.game_mode === "pvp" && !isPlayerTurn && (
-                    <div className="mt-2 flex items-center space-x-2 text-indigo-600">
-                      <div className="flex space-x-1">
-                        <div
-                          className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"
-                          style={{ animationDelay: "0ms" }}
-                        ></div>
-                        <div
-                          className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"
-                          style={{ animationDelay: "150ms" }}
-                        ></div>
-                        <div
-                          className="w-2 h-2 bg-indigo-600 rounded-full animate-bounce"
-                          style={{ animationDelay: "300ms" }}
-                        ></div>
-                      </div>
-                      <span className="text-sm font-medium">
-                        Waiting for opponent's turn...
-                      </span>
-                    </div>
-                  )} */}
                   <GuessHistory
                     guesses={game.self_guesses}
                     title="Your Guesses"
+                    playerId={game.self_id}
+                    starterId={game.starter_id}
                   />
                 </div>
 
@@ -334,6 +315,8 @@ export default function GameBoard() {
                     guesses={game.opponent_guesses || []}
                     title="Opponent's Guesses"
                     isOpponent={true}
+                    playerId={game.opponent_id ?? undefined}
+                    starterId={game.starter_id}
                   />
                 </div>
               </div>
@@ -350,7 +333,11 @@ export default function GameBoard() {
                   <GuessInput disabled={gameOver} />
                 </div>
 
-                <GuessHistory guesses={game.self_guesses} />
+                <GuessHistory
+                  guesses={game.self_guesses}
+                  playerId={game.self_id}
+                  starterId={undefined}
+                />
               </div>
             )}
           </div>

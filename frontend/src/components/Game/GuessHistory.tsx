@@ -1,12 +1,18 @@
 import type { GuessRecord } from '../../types/game';
+import FreeGuessIndicator from './FreeGuessIndicator';
 
 interface GuessHistoryProps {
   guesses: GuessRecord[];
   title?: string;
   isOpponent?: boolean;
+  playerId?: number;
+  starterId?: number | null;
 }
 
-export default function GuessHistory({ guesses, title = "Guess History", isOpponent = false }: GuessHistoryProps) {
+export default function GuessHistory({ guesses, title = "Guess History", isOpponent = false, playerId, starterId }: GuessHistoryProps) {
+  // Determine if this player should see the free guess indicator on their first attempt
+  const showFreeGuess = starterId != null && playerId != null && starterId !== playerId;
+
   if (guesses.length === 0) {
     return (
       <div className="space-y-2">
@@ -36,6 +42,7 @@ export default function GuessHistory({ guesses, title = "Guess History", isOppon
               {guess.guess}
             </span>
             <div className="flex gap-2 ml-auto">
+              {index === 0 && showFreeGuess && <FreeGuessIndicator isOpponent={isOpponent} />}
               <span className={`px-3 py-1 ${colorScheme.exact} rounded-full text-sm font-semibold flex items-center gap-1`}>
                 🎯 {guess.exact}
               </span>

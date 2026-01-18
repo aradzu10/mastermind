@@ -43,6 +43,7 @@ def _game_response_from_game(game: Game, user: User) -> GameResponse:
         opponent_guesses=opponent_player.guesses,
         opponent_elo=opponent_player.elo,
         current_turn=getattr(game, "current_turn", None),
+        starter_id=getattr(game, "starter_id", None),
         # AI Specific
         ai_difficulty=getattr(game, "ai_difficulty", None),
     )

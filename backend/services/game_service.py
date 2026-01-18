@@ -169,7 +169,10 @@ class GameService:
 
             ai_guess = ai_player.get_next_guess()
             exact, wrong_pos, is_winner = mastermind.make_guess(ai_guess)
-            return await self.pvp_repo.make_guess(game, game.player2, ai_guess, exact, wrong_pos, is_winner)
+            ai_player_state = PlayerState(**dataclasses.asdict(game.player2))
+            ai_player_state.guesses.append({"guess": ai_guess, "exact": exact, "wrong_pos": wrong_pos})
+            winner_id = ai_player_state.id if is_winner else None
+            return await self.pvp_repo.make_guess(game, game.player1, ai_player_state, winner_id)
 
         raise ValueError(f"Unknown game mode: {game.game_mode}")
 
