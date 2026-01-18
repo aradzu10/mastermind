@@ -92,7 +92,6 @@ class GameService:
         player2 = self._create_player(ai_user, ai_game.secret)
 
         current_turn = random.choice([player1.id, player2.id])
-        print("ARAD", current_turn, player1.id, player2.id)
 
         if current_turn == player1.id:
             player2 = self._apply_free_guess(player2)
