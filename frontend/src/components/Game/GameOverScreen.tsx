@@ -207,20 +207,18 @@ export function GameOverScreen({ game, onExit }: GameOverScreenProps) {
 
             {eloChange !== 0 && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.8, duration: 0.3 }}
-                className="text-center mt-3"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 2.5 }}
+                className="mt-4 text-center"
               >
-                <span
-                  className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                <span className={`text-sm font-semibold text-green-600 ${
                     eloChange > 0
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
-                >
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}>
                   {eloChange > 0 ? "+" : ""}
-                  {eloChange}
+                  {eloChange} ELO
                 </span>
               </motion.div>
             )}

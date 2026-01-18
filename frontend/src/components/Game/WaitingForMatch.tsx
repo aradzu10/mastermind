@@ -52,7 +52,7 @@ export function WaitingForMatch({
       return () => clearTimeout(timer);
     } else if (showSecret && revealedDigits.length === 4) {
       // All digits revealed, transition to match found
-      const timer = setTimeout(onMatchFound, 500);
+      const timer = setTimeout(onMatchFound, 800);
       return () => clearTimeout(timer);
     }
   }, [showSecret, revealedDigits, onMatchFound]);
