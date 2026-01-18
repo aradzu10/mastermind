@@ -13,19 +13,25 @@ export function UserBadge() {
   if (!user) return null;
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="text-right">
-        <div className="font-medium text-gray-800">{user.display_name}</div>
-        <div className="text-sm text-gray-500">
-          {user.is_guest ? 'Guest' : 'User'} • ELO: {user.elo_rating}
+    <div className="flex items-center justify-between w-full">
+      {/* Left Side: Logo */}
+      <img src="/mastermind.png" alt="Mastermind" className="h-10 w-auto" />
+
+      {/* Right Side: User Info & Button */}
+      <div className="flex items-center gap-4">
+        <div className="text-right">
+          <div className="font-medium text-gray-800">{user.display_name}</div>
+          <div className="text-sm text-gray-500">
+            {user.is_guest ? "Guest" : "User"} • ELO: {user.elo_rating}
+          </div>
         </div>
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+        >
+          Logout
+        </button>
       </div>
-      <button
-        onClick={handleLogout}
-        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-      >
-        Logout
-      </button>
     </div>
   );
 }

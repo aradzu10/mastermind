@@ -153,6 +153,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   resetGame: () => {
-    set({ game: null, currentGuess: "", error: null });
+    set({
+      game: null,
+      currentGuess: "",
+      error: null,
+      opponentThinking: false,
+      loading: false,
+    });
   },
 }));

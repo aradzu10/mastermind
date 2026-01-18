@@ -185,3 +185,12 @@ class GameService:
 
         game = await self.pvp_repo.abandon_game(game, user)
         return game
+
+    async def abandon_all_active_games(self, user: User) -> None:
+        active_games = await self.pvp_repo.get_active_pvp_games(user.id)
+        for game in active_games:
+            try:
+                game = await self.pvp_repo.abandon_game(game, user)
+            except Exception:
+                # Continue abandoning other games even if one fails
+                pass

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { User } from '../types/auth';
 import { authApi } from '../services/authApi';
+import { useGameStore } from "./gameStore";
 
 interface AuthState {
   user: User | null;
@@ -16,8 +17,8 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: !!localStorage.getItem('token'),
+  token: localStorage.getItem("token"),
+  isAuthenticated: !!localStorage.getItem("token"),
   loading: false,
   error: null,
 
@@ -27,8 +28,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await authApi.createGuest(displayName);
 
       // Store token and user in localStorage
-      localStorage.setItem('token', response.access_token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem("token", response.access_token);
+      localStorage.setItem("user", JSON.stringify(response.user));
 
       set({
         user: response.user,
@@ -38,17 +39,22 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     } catch (error) {
       set({
-        error: 'Failed to create guest user',
-        loading: false
+        error: "Failed to create guest user",
+        loading: false,
       });
       throw error;
     }
   },
 
-  logout: () => {
-    // Clear localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  logout: async () => {
+    useGameStore.getState().resetGame();
+
+    try {
+      await authApi.logout();
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    }
 
     set({
       user: null,
@@ -59,7 +65,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   checkAuth: async () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
       set({ isAuthenticated: false, user: null });
       return;
@@ -74,8 +80,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
     } catch (error) {
       // Token is invalid, clear auth
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
       set({
         user: null,
         token: null,

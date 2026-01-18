@@ -46,8 +46,15 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-        <h1 className="text-4xl font-bold text-center mb-2 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-          Mastermind
+        <h1 className="flex items-center justify-center gap-3 text-4xl font-bold mb-2">
+          <img
+            src="/mastermind.png"
+            alt="Mastermind Logo"
+            className="h-[1em] w-auto"
+          />
+          <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            Mastermind
+          </span>
         </h1>
 
         {/* User Info Display */}
@@ -57,13 +64,17 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
               <div className="flex items-center space-x-2">
                 <span className="text-2xl">👤</span>
                 <div>
-                  <p className="text-sm font-semibold text-gray-800">{user.display_name}</p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {user.display_name}
+                  </p>
                   <p className="text-xs text-gray-600">Player</p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-xs text-gray-600">ELO Rating</p>
-                <p className="text-xl font-bold text-indigo-600">{user.elo_rating}</p>
+                <p className="text-xl font-bold text-indigo-600">
+                  {user.elo_rating}
+                </p>
               </div>
             </div>
           </div>
@@ -139,15 +150,19 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
             <div className="ml-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
               {/* AI Difficulty Selection */}
               <div className="mb-4">
-                <p className="text-sm font-medium text-gray-700 mb-2">AI Difficulty:</p>
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  AI Difficulty:
+                </p>
                 <div className="flex gap-3">
                   <label className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="radio"
                       name="aiDifficulty"
                       value="easy"
-                      checked={aiDifficulty === 'easy'}
-                      onChange={(e) => setAiDifficulty(e.target.value as 'easy' | 'hard')}
+                      checked={aiDifficulty === "easy"}
+                      onChange={(e) =>
+                        setAiDifficulty(e.target.value as "easy" | "hard")
+                      }
                       className="w-4 h-4 text-purple-600"
                     />
                     <span className="text-sm text-gray-700">
@@ -159,8 +174,10 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
                       type="radio"
                       name="aiDifficulty"
                       value="hard"
-                      checked={aiDifficulty === 'hard'}
-                      onChange={(e) => setAiDifficulty(e.target.value as 'easy' | 'hard')}
+                      checked={aiDifficulty === "hard"}
+                      onChange={(e) =>
+                        setAiDifficulty(e.target.value as "easy" | "hard")
+                      }
                       className="w-4 h-4 text-purple-600"
                     />
                     <span className="text-sm text-gray-700">
@@ -181,9 +198,7 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
                 maxLength={4}
                 className="w-full px-4 py-2 text-2xl text-center tracking-widest border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono"
               />
-              {error && (
-                <p className="text-red-500 text-sm mt-1">{error}</p>
-              )}
+              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
               <p className="text-xs text-gray-500 mt-2">
                 Leave empty for a random code
               </p>
@@ -230,9 +245,7 @@ export function GameModeSelector({ onStartGame }: GameModeSelectorProps) {
                 maxLength={4}
                 className="w-full px-4 py-2 text-2xl text-center tracking-widest border-2 border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono"
               />
-              {error && (
-                <p className="text-red-500 text-sm mt-1">{error}</p>
-              )}
+              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
               <p className="text-xs text-gray-500 mt-2">
                 Leave empty for a random code
               </p>

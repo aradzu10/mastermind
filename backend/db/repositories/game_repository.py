@@ -39,23 +39,6 @@ class SingleGameRepository(BaseRepository[SingleGame]):
             starter_id=player.id,
         )
 
-    async def get_by_user_id(self, user_id: int, limit: int = 10) -> List[SingleGame]:
-        result = await self.session.execute(
-            select(SingleGame)
-            .where(SingleGame.player.id == user_id)
-            .order_by(SingleGame.created_at.desc())
-            .limit(limit)
-        )
-        return list(result.scalars().all())
-
-    async def get_active_games(self, user_id: int) -> List[SingleGame]:
-        result = await self.session.execute(
-            select(SingleGame)
-            .where(SingleGame.player.id == user_id, SingleGame.completed_at == None)
-            .order_by(SingleGame.created_at.desc())
-        )
-        return list(result.scalars().all())
-
     async def make_guess(
         self,
         game: SingleGame,
@@ -142,9 +125,11 @@ class PvPGameRepository(BaseRepository[PvPGame]):
             finally:
                 await session.close()
 
-    async def get_by_player_id(self, player_id: int) -> list[PvPGame]:
+    async def get_active_pvp_games(self, user_id: int) -> list[PvPGame]:
         result = await self.session.execute(
-            select(PvPGame).where((PvPGame.player1.id == player_id) | (PvPGame.player2.id == player_id))
+            select(PvPGame).where(
+                ((PvPGame._p1_id == user_id) | (PvPGame._p2_id == user_id)) & (PvPGame.status == "in_progress")
+            )
         )
         return list(result.scalars().all())
 

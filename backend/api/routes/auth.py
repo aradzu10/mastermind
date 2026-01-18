@@ -6,6 +6,7 @@ from backend.db.database import get_db
 from backend.db.models.user import User
 from backend.schemas.auth import GuestUserCreate, TokenResponse, UserResponse
 from backend.services.auth_service import AuthService
+from backend.services.game_service import GameService
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -53,3 +54,13 @@ async def get_current_user_info(
         elo_rating=current_user.elo_rating,
         created_at=current_user.created_at
     )
+
+
+@router.post("/logout", status_code=200)
+async def logout(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    game_service = GameService(db)
+    await game_service.abandon_all_active_games(current_user)
+    return {"message": "Logged out successfully"}

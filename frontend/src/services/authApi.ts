@@ -21,14 +21,18 @@ authAxios.interceptors.request.use((config) => {
 
 export const authApi = {
   createGuest: async (displayName: string): Promise<TokenResponse> => {
-    const response = await authAxios.post<TokenResponse>('/api/auth/guest', {
+    const response = await authAxios.post<TokenResponse>("/api/auth/guest", {
       display_name: displayName,
     } as GuestUserCreate);
     return response.data;
   },
 
   getCurrentUser: async (): Promise<User> => {
-    const response = await authAxios.get<User>('/api/auth/me');
+    const response = await authAxios.get<User>("/api/auth/me");
     return response.data;
+  },
+
+  logout: async (): Promise<void> => {
+    await authAxios.post("/api/auth/logout");
   },
 };
