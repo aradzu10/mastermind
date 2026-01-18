@@ -92,7 +92,6 @@ Then it will check for cheating, and if someone cheat, it automatically looses.
 
 A backend infrastructure to manage the competitive ecosystem:
 
-* **Auth:** Secure login using google mail. 
 * **Logging as guest** Without keeping score.
 * **Database:** Persistent storage for profiles and match history.
 * **Ranking:** A global Leaderboard based on an ELO ranking system.

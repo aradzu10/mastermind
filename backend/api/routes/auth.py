@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.api.dependencies import get_current_user
 from backend.db.database import get_db
 from backend.db.models.user import User
-from backend.schemas.auth import GoogleAuthRequest, GuestUserCreate, TokenResponse, UserResponse
+from backend.schemas.auth import GuestUserCreate, TokenResponse, UserResponse
 from backend.services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -37,40 +37,6 @@ async def create_guest(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create guest user: {str(e)}"
-        )
-
-
-@router.post("/google", response_model=TokenResponse)
-async def authenticate_google(
-    auth_data: GoogleAuthRequest,
-    db: AsyncSession = Depends(get_db)
-):
-    """Authenticate via Google OAuth and return JWT token"""
-    auth_service = AuthService(db)
-
-    try:
-        user, token = await auth_service.authenticate_google(
-            google_id=auth_data.google_id,
-            email=auth_data.email,
-            display_name=auth_data.display_name
-        )
-
-        return TokenResponse(
-            access_token=token,
-            token_type="bearer",
-            user=UserResponse(
-                id=user.id,
-                email=user.email,
-                display_name=user.display_name,
-                is_guest=user.is_guest,
-                elo_rating=user.elo_rating,
-                created_at=user.created_at
-            )
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to authenticate: {str(e)}"
         )
 
 

@@ -17,12 +17,6 @@ class UserRepository(BaseRepository[User]):
         )
         return result.scalar_one_or_none()
 
-    async def get_by_google_id(self, google_id: str) -> Optional[User]:
-        result = await self.session.execute(
-            select(User).where(User.google_id == google_id)
-        )
-        return result.scalar_one_or_none()
-
     async def get_by_id(self, user_id: int) -> Optional[User]:
         result = await self.session.execute(
             select(User).where(User.id == user_id)

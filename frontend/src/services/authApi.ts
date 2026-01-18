@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { TokenResponse, GuestUserCreate, GoogleAuthRequest, User } from '../types/auth';
+import type { TokenResponse, GuestUserCreate, User } from '../types/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -24,15 +24,6 @@ export const authApi = {
     const response = await authAxios.post<TokenResponse>('/api/auth/guest', {
       display_name: displayName,
     } as GuestUserCreate);
-    return response.data;
-  },
-
-  authenticateGoogle: async (googleId: string, email: string, displayName: string): Promise<TokenResponse> => {
-    const response = await authAxios.post<TokenResponse>('/api/auth/google', {
-      google_id: googleId,
-      email,
-      display_name: displayName,
-    } as GoogleAuthRequest);
     return response.data;
   },
 

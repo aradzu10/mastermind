@@ -11,7 +11,6 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=True)
-    google_id = Column(String, unique=True, index=True, nullable=True)
     display_name = Column(String, nullable=False)
     is_guest = Column(Boolean, default=False, nullable=False)
     elo_rating = Column(Float, default=1200.0, nullable=False)

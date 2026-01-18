@@ -15,7 +15,6 @@ class RandomAI(BaseAI):
         return User(
             id=1,
             email="random_bot@ai.mastermind",
-            google_id=None,
             display_name="Brad",
             is_guest=False,
             elo_rating=200.0,

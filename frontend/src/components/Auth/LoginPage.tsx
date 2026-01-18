@@ -60,12 +60,6 @@ export function LoginPage() {
             {loading ? 'Loading...' : 'Play as Guest'}
           </button>
         </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500">
-            Google OAuth coming soon...
-          </p>
-        </div>
       </div>
     </div>
   );

@@ -1,20 +1,14 @@
 """
 Authentication Pydantic schemas for request/response validation.
 """
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel
 
 
 class GuestUserCreate(BaseModel):
     """Request body for creating a guest user."""
-    display_name: str
-
-
-class GoogleAuthRequest(BaseModel):
-    """Request body for Google OAuth authentication."""
-    google_id: str
-    email: str
     display_name: str
 
 

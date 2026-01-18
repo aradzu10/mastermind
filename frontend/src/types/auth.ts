@@ -20,9 +20,3 @@ export interface TokenResponse {
 export interface GuestUserCreate {
   display_name: string;
 }
-
-export interface GoogleAuthRequest {
-  google_id: string;
-  email: string;
-  display_name: string;
-}

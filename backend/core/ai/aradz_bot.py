@@ -19,7 +19,6 @@ class AradzBot(BaseAI):
         return User(
             id=0,
             email="aradz@ai.mastermind",
-            google_id=None,
             display_name="Aradz",
             is_guest=False,
             elo_rating=2000.0,

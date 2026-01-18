@@ -27,23 +27,6 @@ class AuthService:
         token = create_access_token(user.id)
         return user, token
 
-    async def authenticate_google(self, google_id: str, email: str, display_name: str) -> tuple[User, str]:
-        user = await self.repo.get_by_google_id(google_id)
-
-        if not user:
-            user = await self.repo.create(
-                email=email,
-                google_id=google_id,
-                display_name=display_name,
-                is_guest=False,
-                elo_rating=1200
-            )
-            await self.session.flush()
-            await self.session.refresh(user)
-
-        token = create_access_token(user.id)
-        return user, token
-
     async def get_current_user(self, token: str) -> Optional[User]:
         user_id = verify_token(token)
         if user_id is None:
