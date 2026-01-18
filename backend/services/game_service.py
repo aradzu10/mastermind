@@ -62,13 +62,12 @@ class GameService:
 
     async def _create_or_join_pvp_game(self, user: User, player_secret: str | None) -> Game:
         game_engine = MasterMindGame(player_secret)
-        available_game = await self.pvp_repo.get_waiting_games()
+        available_game = await self.pvp_repo.get_waiting_game()
         if available_game:
             # Join existing game - player1 gets the joining user's secret, player2 is the new player
-            game = available_game[0]
-            player1 = PlayerState(**dataclasses.asdict(game.player1))
+            player1 = PlayerState(**dataclasses.asdict(available_game.player1))
             player1.secret = game_engine.secret
-            player2 = self._create_player(user, game.player2.secret)
+            player2 = self._create_player(user, available_game.player2.secret)
 
             current_turn = random.choice([player1.id, player2.id])
 
@@ -76,7 +75,7 @@ class GameService:
                 player2 = self._apply_free_guess(player2)
             else:
                 player1 = self._apply_free_guess(player1)
-            return await self.pvp_repo.join_game(available_game[0], player1, player2, current_turn)
+            return await self.pvp_repo.join_game(available_game, player1, player2, current_turn)
 
         # Create new waiting game
         player1 = self._create_player(user, secret="")
@@ -93,6 +92,7 @@ class GameService:
         player2 = self._create_player(ai_user, ai_game.secret)
 
         current_turn = random.choice([player1.id, player2.id])
+        print("ARAD", current_turn, player1.id, player2.id)
 
         if current_turn == player1.id:
             player2 = self._apply_free_guess(player2)

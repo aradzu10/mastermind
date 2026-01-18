@@ -35,7 +35,7 @@ export default function GameBoard() {
   ) => {
     await createGame(mode, playerSecret, aiDifficulty);
     setShowModeSelector(false);
-    setShowWaitingScreen(true); // Always show waiting screen first
+    setShowWaitingScreen(true);
   };
 
   const handleNewGame = async () => {
@@ -127,7 +127,7 @@ export default function GameBoard() {
         playerSecret={game.opponent_secret || ""}
         onMatchFound={handleMatchFound}
         onCancel={handleNewGame}
-        isAI={game.game_mode === 'ai'}
+        gameMode={game.game_mode}
       />
     );
   }

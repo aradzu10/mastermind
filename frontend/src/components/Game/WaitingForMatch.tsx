@@ -7,7 +7,7 @@ interface WaitingForMatchProps {
   playerSecret: string;
   onMatchFound: () => void;
   onCancel: () => void;
-  isAI?: boolean;
+  gameMode: string;
 }
 
 export function WaitingForMatch({
@@ -15,16 +15,19 @@ export function WaitingForMatch({
   playerSecret,
   onMatchFound,
   onCancel,
-  isAI = false,
+  gameMode,
 }: WaitingForMatchProps) {
   const { getGame, game } = useGameStore();
   const [showSecret, setShowSecret] = useState(false);
   const [revealedDigits, setRevealedDigits] = useState<number[]>([]);
 
   useEffect(() => {
-    if (isAI) {
+    if (gameMode === "ai") {
       // For AI, start secret animation immediately
       const timer = setTimeout(() => setShowSecret(true), 500);
+      return () => clearTimeout(timer);
+    } else if (gameMode === "single") {
+      const timer = setTimeout(onMatchFound, 800);
       return () => clearTimeout(timer);
     } else {
       // For PvP, poll for opponent
@@ -40,7 +43,7 @@ export function WaitingForMatch({
 
       return () => clearInterval(pollInterval);
     }
-  }, [gameId, getGame, game?.status, game?.opponent_id, isAI]);
+  }, [gameId, getGame, game?.status, game?.opponent_id, gameMode]);
 
   // Slot machine animation - reveal digits one by one
   useEffect(() => {
@@ -103,7 +106,11 @@ export function WaitingForMatch({
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
         {/* FIX: Changed text-4xl to text-2xl sm:text-4xl and added pb-1 */}
         <h1 className="text-2xl sm:text-4xl font-bold mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent pb-1">
-          {isAI ? "AI Match" : "Multiplayer Match"}
+          {gameMode === "ai"
+            ? "AI Match"
+            : gameMode === "pvp"
+              ? "Multiplayer Match"
+              : "Single Player Match"}
         </h1>
 
         {/* Animated Sword */}
@@ -118,7 +125,9 @@ export function WaitingForMatch({
               exit={{ opacity: 0 }}
             >
               <p className="text-xl text-gray-700 mb-4 font-semibold">
-                {isAI ? "Preparing match..." : "Waiting for opponent..."}
+                {gameMode !== "pvp"
+                  ? "Preparing match..."
+                  : "Waiting for opponent..."}
               </p>
 
               {/* ELO display */}

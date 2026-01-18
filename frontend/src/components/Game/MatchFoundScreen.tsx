@@ -20,9 +20,9 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
   const opponentName =
     game.game_mode === "ai"
       ? `${game.opponent_name} 🤖`
-      : game.opponent_name || "Opponent";
+      : game.opponent_name || "Yourself (no pressure)";
 
-  const goesFirst = game.current_turn === game.self_id;
+  const goesFirst = game.starter_id === game.self_id;
   const turnMessage = goesFirst ? "You Go First!" : "You Go Second!";
   const freeGuessMessage = goesFirst
     ? "Your opponent got a free random guess"
@@ -59,47 +59,47 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
         </motion.div>
 
         {/* ANIMATION CONTAINER 
-            w-full: Ensures the center point is the true center of the card.
-            h-40: Reserves vertical space so elements don't jump around.
+           w-full: Takes full width of the card
+           h-40: Fixed height to prevent layout shifts
+           relative: allows absolute positioning inside
         */}
-        <div className="relative w-full h-40 flex items-center justify-center">
+        <div className="relative w-full h-40">
           {/* SWORDS */}
-          <motion.div
-            className="relative z-0 text-8xl leading-none"
-            initial={{ rotate: 0, scale: 1 }}
-            animate={{
-              rotate: [0, 720, 720, 720],
-              scale: [1, 1, 3, 1],
-            }}
-            transition={{
-              duration: 4.5, // Total animation time (Slower)
-              // [Start, Spin Start, Shrink Start, End]
-              // 0 -> 0.1: Initial delay
-              // 0.1 -> 0.9: Grow and Rotate (Slow)
-              // 0.9 -> 1.0: Snap back to small (Fast)
-              times: [0, 0.1, 0.9, 1],
-              ease: "easeInOut",
-            }}
-            onAnimationComplete={() => {
-              setTimeout(() => {
-                setAnimationComplete(true);
-              }, 500);
-            }}
-          >
-            ⚔️
-          </motion.div>
+          {/* We center the sword manually with flex inside the relative container */}
+          <div className="absolute inset-0 flex items-center justify-center z-0">
+            <motion.div
+              className="text-8xl leading-none"
+              initial={{ rotate: 0, scale: 1 }}
+              animate={{
+                rotate: [0, 360, 360],
+                scale: [1, 1, 1, 4, 1],
+              }}
+              transition={{
+                duration: 3,
+                times: [0, 0.3, 0.5, 0.9, 1],
+                ease: "easeInOut",
+              }}
+              onAnimationComplete={() => {
+                setTimeout(() => {
+                  setAnimationComplete(true);
+                }, 200);
+              }}
+            >
+              ⚔️
+            </motion.div>
+          </div>
 
           {/* BANNER 
-             absolute top-1/2 left-1/2: Centers specifically within the w-full parent.
-             bg-opacity/40: Much more transparent.
+             absolute inset-0: Stretches to fill the container
+             flex items-center justify-center: Centers the content PERFECTLY
           */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, duration: 0.4 }}
-            className="absolute z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full px-4"
+            className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none"
           >
-            <div className="mx-auto max-w-[90%] bg-gradient-to-r from-purple-600/40 to-indigo-600/40 backdrop-blur-md text-white px-6 py-3 rounded-lg shadow-lg border border-white/10">
+            <div className="max-w-[90%] bg-gradient-to-r from-purple-600/60 to-indigo-600/60 backdrop-blur-md text-white px-6 py-3 rounded-lg shadow-lg border border-white/20">
               <p className="text-xl font-bold text-center whitespace-nowrap">
                 {turnMessage}
               </p>

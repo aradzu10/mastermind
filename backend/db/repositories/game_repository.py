@@ -1,3 +1,4 @@
+import asyncio
 import dataclasses
 from datetime import datetime
 from typing import List
@@ -6,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectin_polymorphic
 
+from backend.db.database import AsyncSessionLocal
 from backend.db.models.game import Game, PlayerState, PvPGame, SingleGame
 from backend.db.models.user import User
 from backend.db.repositories.base import BaseRepository
@@ -108,10 +110,36 @@ class PvPGameRepository(BaseRepository[PvPGame]):
             starter_id=current_turn,  # type: ignore
         )
 
-    async def get_waiting_games(self) -> list[PvPGame]:
-        # TODO: Change to get a random waiting game, and set to joining.
-        result = await self.session.execute(select(PvPGame).where(PvPGame.status == "waiting"))
-        return list(result.scalars().all())
+    async def get_waiting_game(self) -> PvPGame | None:
+        """Atomically get a waiting game and mark it as 'joining' to prevent race conditions."""
+        result = await self.session.execute(
+            select(PvPGame).where(PvPGame.status == "waiting").limit(1).with_for_update(skip_locked=True)
+        )
+        game = result.scalar_one_or_none()
+
+        if game:
+            game.status = "joining"
+            await self.session.flush()
+            await self.session.refresh(game)
+            asyncio.create_task(self._revert_joining_status(game.id))
+
+        return game
+
+    async def _revert_joining_status(self, game_id: int) -> None:
+        await asyncio.sleep(1.0)
+
+        async with AsyncSessionLocal() as session:
+            try:
+                game = await session.get(PvPGame, game_id)
+                if game and game.status == "joining":
+                    game.status = "waiting"
+                    await session.commit()
+            except Exception as e:
+                await session.rollback()
+                # Log error but don't raise - background task should fail silently
+                print(f"Error reverting joining status for game {game_id}: {e}")
+            finally:
+                await session.close()
 
     async def get_by_player_id(self, player_id: int) -> list[PvPGame]:
         result = await self.session.execute(
