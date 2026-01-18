@@ -93,23 +93,24 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
              absolute inset-0: Stretches to fill the container
              flex items-center justify-center: Centers the content PERFECTLY
           */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5, duration: 0.4 }}
-            className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none"
-          >
-            <div className="max-w-[90%] bg-gradient-to-r from-purple-600/60 to-indigo-600/60 backdrop-blur-md text-white px-6 py-3 rounded-lg shadow-lg border border-white/20">
-              <p className="text-xl font-bold text-center whitespace-nowrap">
-                {turnMessage}
-              </p>
-              <p className="text-xs text-center opacity-90 mt-1 font-medium">
-                {freeGuessMessage}
-              </p>
-            </div>
-          </motion.div>
+          {game.game_mode !== "single" && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
+              className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none"
+            >
+              <div className="max-w-[90%] bg-gradient-to-r from-purple-600/60 to-indigo-600/60 backdrop-blur-md text-white px-6 py-3 rounded-lg shadow-lg border border-white/20">
+                <p className="text-xl font-bold text-center whitespace-nowrap">
+                  {turnMessage}
+                </p>
+                <p className="text-xs text-center opacity-90 mt-1 font-medium">
+                  {freeGuessMessage}
+                </p>
+              </div>
+            </motion.div>
+          )}
         </div>
-
         {/* Self Info */}
         <motion.div
           initial={{ opacity: 0, x: 50 }}

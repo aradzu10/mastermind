@@ -36,6 +36,7 @@ class SingleGameRepository(BaseRepository[SingleGame]):
             game_mode="single",
             status="in_progress",
             started_at=datetime.utcnow(),
+            starter_id=player.id,
         )
 
     async def get_by_user_id(self, user_id: int, limit: int = 10) -> List[SingleGame]:
