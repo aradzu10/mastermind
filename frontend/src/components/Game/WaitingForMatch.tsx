@@ -62,11 +62,9 @@ export function WaitingForMatch({
 
   const SlotDigit = ({
     digit,
-    index,
     revealed,
   }: {
     digit: string;
-    index: number;
     revealed: boolean;
   }) => {
     const [currentNum, setCurrentNum] = useState(0);
@@ -172,7 +170,6 @@ export function WaitingForMatch({
                   <SlotDigit
                     key={index}
                     digit={digit}
-                    index={index}
                     revealed={revealedDigits.includes(index)}
                   />
                 ))}

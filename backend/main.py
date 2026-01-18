@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from backend.api.routes import games, auth
 import os
 
@@ -33,9 +34,5 @@ async def health_check():
 
 @app.get("/")
 async def root():
-    """Root endpoint"""
-    return {
-        "message": "Mastermind API",
-        "version": "2.0.0",
-        "docs": "/docs"
-    }
+    """Root endpoint - redirect to /game"""
+    return RedirectResponse(url="/game")
