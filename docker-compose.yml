@@ -4,8 +4,10 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: mastermind_db
-    env_file:
-      - .env
+    environment:
+      POSTGRES_USER: mastermind
+      POSTGRES_PASSWORD: mastermind_dev
+      POSTGRES_DB: mastermind
     ports:
       - "5432:5432"
     volumes:
@@ -21,8 +23,9 @@ services:
       context: .
       dockerfile: docker/backend.Dockerfile
     container_name: mastermind_backend
-    env_file:
-      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://mastermind:mastermind_dev@postgres:5432/mastermind
+      CORS_ORIGINS: http://localhost,http://localhost:3000,http://localhost:5173
     ports:
       - "8000:8000"
     volumes:
