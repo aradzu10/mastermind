@@ -1,13 +1,15 @@
-import { create } from 'zustand';
-import type { Game, GameMode } from '../types/game';
-import { gameApi } from '../services/api';
+import { create } from "zustand";
+import type { Game, GameMode } from "../types/game";
+import { gameApi } from "../services/api";
 
 // Helper function to calculate if opponent is thinking
 const calculateOpponentThinking = (game: Game): boolean => {
-  if (game.game_mode === 'single' || game.winner_id !== null) {
+  if (game.game_mode === "single" || game.winner_id !== null) {
     return false;
   }
-  return game.opponent_id !== undefined && game.current_turn === game.opponent_id;
+  return (
+    game.opponent_id !== undefined && game.current_turn === game.opponent_id
+  );
 };
 
 interface GameState {
@@ -54,7 +56,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       const gameWithElo = {
         ...game,
         old_self_elo: game.self_elo,
-        old_opponent_elo: game.opponent_elo,
       };
       set({
         game: gameWithElo,
@@ -68,12 +69,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   getGame: async (gameId: number) => {
+    const { game } = get();
     try {
       const result = await gameApi.getGame(gameId);
       const gameWithElo = {
         ...result,
-        old_self_elo: result.self_elo,
-        old_opponent_elo: result.opponent_elo,
+        old_self_elo: game?.old_self_elo || result.self_elo,
       };
       set({
         game: gameWithElo,
@@ -95,8 +96,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const result = await gameApi.makeGuess(game.id, guess);
       const gameWithElo = {
         ...result,
-        old_self_elo: result.self_elo,
-        old_opponent_elo: result.opponent_elo,
+        old_self_elo: game?.old_self_elo || result.self_elo,
       };
       set({
         game: gameWithElo,
@@ -116,22 +116,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     try {
       const result = await gameApi.opponentGuess(game.id);
 
-      if (
+      const oppGuesses =
         (result.opponent_guesses?.length || 0) >
-          (game.opponent_guesses?.length || 0) ||
-        result.winner_id !== null
-      ) {
-        const gameWithElo = {
-          ...result,
-          old_self_elo: result.self_elo,
-          old_opponent_elo: result.opponent_elo,
-        };
-        set({
-          game: gameWithElo,
-          loading: false,
-          opponentThinking: calculateOpponentThinking(gameWithElo),
-        });
-      }
+        (game.opponent_guesses?.length || 0)
+          ? result.opponent_guesses
+          : game.opponent_guesses;
+
+      const gameWithElo = {
+        ...result,
+        opponent_guesses: oppGuesses,
+        old_self_elo: game?.old_self_elo || result.self_elo,
+      };
+      set({
+        game: gameWithElo,
+        loading: false,
+        opponentThinking: calculateOpponentThinking(gameWithElo),
+      });
     } catch (error) {
       set({ error: "Failed to get opponent's guess", loading: false });
     }

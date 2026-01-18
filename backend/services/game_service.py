@@ -103,16 +103,6 @@ class GameService:
         exact, wrong_pos, is_winner = mastermind.make_guess(guess_str)
         game = await repo.make_guess(game, user, guess_str, exact, wrong_pos, is_winner)
 
-        # Toggle turn for PvP games (only if game is still ongoing)
-        if game.game_mode == "pvp" and game.winner_id is None:
-            game.current_turn = game.player2.id if game.player1.id == game.current_turn else game.player1.id
-            await self.pvp_repo.session.commit()
-            await self.pvp_repo.session.refresh(game)
-
-        # Update ELO for PvP games when someone wins
-        if is_winner and game.game_mode == "pvp":
-            await self._update_pvp_elo(game, user)
-
         return game
 
     async def get_opponent_guess(self, game_id: int, user: User) -> Game:
@@ -136,23 +126,6 @@ class GameService:
 
         raise ValueError(f"Unknown game mode: {game.game_mode}")
 
-    async def _update_pvp_elo(self, game: Game, winner: User) -> None:
-        if game.player1.id == winner.id:
-            loser_id = game.player2.id
-            game.player1.elo += 20
-            game.player2.elo = max(0, game.player2.elo - 10)
-        else:
-            loser_id = game.player1.id
-            game.player2.elo += 20
-            game.player1.elo = max(0, game.player1.elo - 10)
-
-        winner.elo_rating += 20
-        loser = await self.user_repo.get_by_id(loser_id)
-        if loser:
-            loser.elo_rating = max(0, loser.elo_rating - 10)  # Don't go below 0
-
-        await self.user_repo.session.commit()
-
     async def abandon_game(self, game_id: int, user: User) -> Game:
         game = await self.get_game(game_id, user)
 
@@ -162,23 +135,4 @@ class GameService:
             raise ValueError("Cannot abandon single player games")
 
         game = await self.pvp_repo.abandon_game(game, user)
-        await self._update_abandon_elo(game, user)
         return game
-
-    async def _update_abandon_elo(self, game: Game, abandoner: User) -> None:
-        if game.player1.id == abandoner.id:
-            winner = await self.user_repo.get_by_id(game.player2.id)
-            loser = abandoner
-            game.player1.elo = max(0, game.player1.elo - 10)
-            game.player2.elo += 20
-        else:
-            winner = await self.user_repo.get_by_id(game.player1.id)
-            loser = abandoner
-            game.player2.elo = max(0, game.player2.elo - 10)
-            game.player1.elo += 20
-
-        if winner:
-            winner.elo_rating += 20
-        loser.elo_rating = max(0, loser.elo_rating - 10)
-
-        await self.user_repo.session.commit()

@@ -205,7 +205,7 @@ export default function GameBoard() {
                   className="px-6 py-3 bg-white text-indigo-600 rounded-lg font-semibold
                            hover:bg-indigo-50 transition-colors shadow-md"
                 >
-                  New Game
+                  Abandon
                 </button>
               </div>
             </div>
