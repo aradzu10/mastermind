@@ -1,5 +1,4 @@
 import dataclasses
-import random
 from datetime import datetime
 from typing import List
 
@@ -29,14 +28,7 @@ class SingleGameRepository(BaseRepository[SingleGame]):
     def __init__(self, session: AsyncSession):
         super().__init__(SingleGame, session)
 
-    async def create(self, user: User, secret: str) -> SingleGame:  # type: ignore
-        player = PlayerState(
-            id=user.id,  # type: ignore
-            name=user.display_name,  # type: ignore
-            secret=secret,
-            guesses=[],
-            elo=user.elo_rating,  # type: ignore
-        )
+    async def create(self, player: PlayerState) -> SingleGame:  # type: ignore
         return await super().create(
             player=player,
             game_mode="single",
@@ -64,23 +56,13 @@ class SingleGameRepository(BaseRepository[SingleGame]):
     async def make_guess(
         self,
         game: SingleGame,
-        user: User,
-        guess: str,
-        exact: int,
-        wrong_pos: int,
-        is_winner: bool,
+        player: PlayerState,
+        opponent: PlayerState,
+        winner_id: int | None = None,
     ) -> SingleGame:
-        curr_guess = [{"guess": guess, "exact": exact, "wrong_pos": wrong_pos}]
-        player = PlayerState(
-            id=game.player.id,
-            name=game.player.name,
-            secret=game.player.secret,
-            guesses=game.player.guesses + curr_guess,
-            elo=game.player.elo,
-        )
         game.player = player
-        if is_winner:
-            game.winner_id = game.player.id  # type: ignore
+        if winner_id is not None:
+            game.winner_id = winner_id  # type: ignore
             game.status = "completed"  # type: ignore
             game.completed_at = datetime.utcnow()  # type: ignore
         await self.session.flush()
@@ -92,21 +74,7 @@ class PvPGameRepository(BaseRepository[PvPGame]):
     def __init__(self, session: AsyncSession):
         super().__init__(PvPGame, session)
 
-    async def create(self, user: User, secret: str) -> PvPGame:  # type: ignore
-        player1 = PlayerState(
-            id=user.id,  # type: ignore
-            name=user.display_name,  # type: ignore
-            secret="",
-            guesses=[],
-            elo=user.elo_rating,  # type: ignore
-        )
-        player2 = PlayerState(
-            id=None,  # type: ignore
-            name=None,  # type: ignore
-            secret=secret,
-            guesses=[],
-            elo=None,  # type: ignore
-        )
+    async def create(self, player1: PlayerState, player2: PlayerState) -> PvPGame:  # type: ignore
         return await super().create(
             player1=player1,
             player2=player2,
@@ -114,55 +82,20 @@ class PvPGameRepository(BaseRepository[PvPGame]):
             game_mode="pvp",
         )
 
-    async def join_game(self, game: PvPGame, user: User, secret: str) -> PvPGame:
-        player1 = PlayerState(
-            id=game.player1.id,
-            name=game.player1.name,
-            secret=secret,
-            guesses=game.player1.guesses,
-            elo=game.player1.elo,
-        )
-        player2 = PlayerState(
-            id=user.id,  # type: ignore
-            name=user.display_name,  # type: ignore
-            secret=game.player2.secret,
-            guesses=[],
-            elo=user.elo_rating,  # type: ignore
-        )
+    async def join_game(self, game: PvPGame, player1: PlayerState, player2: PlayerState, current_turn: int) -> PvPGame:
         game.player1 = player1
         game.player2 = player2
         game.status = "in_progress"  # type: ignore
         game.started_at = datetime.utcnow()  # type: ignore
-        if random.choice([1, 2]) == 1:
-            game.current_turn = player1.id  # type: ignore
-        else:
-            game.current_turn = player2.id  # type: ignore
+        game.current_turn = current_turn  # type: ignore
+
         await self.session.flush()
         await self.session.refresh(game)
         return game
 
     async def create_ai_game(
-        self,
-        user: User,
-        user_secret: str,
-        ai_user: User,
-        ai_secret: str,
-        ai_difficulty: str,
+        self, player1: PlayerState, player2: PlayerState, ai_difficulty: str, current_turn: int
     ) -> PvPGame:  # type: ignore
-        player1 = PlayerState(
-            id=user.id,  # type: ignore
-            name=user.display_name,  # type: ignore
-            secret=user_secret,
-            guesses=[],
-            elo=user.elo_rating,  # type: ignore
-        )
-        player2 = PlayerState(
-            id=ai_user.id,  # type: ignore
-            name=ai_user.display_name,  # type: ignore
-            secret=ai_secret,
-            guesses=[],
-            elo=ai_user.elo_rating,  # type: ignore
-        )
         return await super().create(
             player1=player1,
             player2=player2,
@@ -170,10 +103,11 @@ class PvPGameRepository(BaseRepository[PvPGame]):
             game_mode="ai",
             ai_difficulty=ai_difficulty,
             started_at=datetime.utcnow(),
-            current_turn=player1.id,  # type: ignore
+            current_turn=current_turn,  # type: ignore
         )
 
     async def get_waiting_games(self) -> list[PvPGame]:
+        # TODO: Change to get a random waiting game, and set to joining.
         result = await self.session.execute(select(PvPGame).where(PvPGame.status == "waiting"))
         return list(result.scalars().all())
 
@@ -186,33 +120,18 @@ class PvPGameRepository(BaseRepository[PvPGame]):
     async def make_guess(
         self,
         game: PvPGame,
-        user: User,
-        guess: str,
-        exact: int,
-        wrong_pos: int,
-        is_winner: bool,
+        player1: PlayerState,
+        player2: PlayerState,
+        winner_id: int | None = None,
     ) -> PvPGame:
-        is_p1 = game.player1.id == user.id
-        current_player = game.player1 if is_p1 else game.player2
-
-        new_guess = [{"guess": guess, "exact": exact, "wrong_pos": wrong_pos}]
-        updated_player = PlayerState(
-            id=current_player.id,
-            name=current_player.name,
-            secret=current_player.secret,
-            guesses=current_player.guesses + new_guess,
-            elo=current_player.elo,
-        )
-
-        if is_p1:
-            game.player1 = updated_player
+        if winner_id is not None:
+            await self._finish_game(game, winner_id=winner_id, status="completed")
+            await self._update_elo(player1, player2, winner_id)
         else:
-            game.player2 = updated_player
+            game.current_turn = player2.id if game.current_turn == player1.id else player1.id
 
-        if is_winner:
-            await self._finish_game(game, winner_id=user.id, status="completed")
-        else:
-            game.current_turn = game.player2.id if is_p1 else game.player1.id
+        game.player1 = player1
+        game.player2 = player2
 
         await self.session.flush()
         await self.session.refresh(game)
@@ -221,6 +140,12 @@ class PvPGameRepository(BaseRepository[PvPGame]):
     async def abandon_game(self, game: PvPGame, abandoner: User) -> PvPGame:
         winner_id = game.player2.id if game.player1.id == abandoner.id else game.player1.id
         await self._finish_game(game, winner_id=winner_id, status="abandoned")
+        player1 = PlayerState(**dataclasses.asdict(game.player1))
+        player2 = PlayerState(**dataclasses.asdict(game.player2))
+        await self._update_elo(player1, player2, winner_id)
+
+        game.player1 = player1
+        game.player2 = player2
 
         await self.session.flush()
         await self.session.refresh(game)
@@ -231,21 +156,15 @@ class PvPGameRepository(BaseRepository[PvPGame]):
         game.winner_id = winner_id
         game.status = status
         game.completed_at = datetime.utcnow()
-        await self._update_elo(game)
 
-    async def _update_elo(self, game: PvPGame) -> None:
-        p1_user = await self.session.get(User, game.player1.id)
-        p2_user = await self.session.get(User, game.player2.id)
+    async def _update_elo(self, player1: PlayerState, player2: PlayerState, winner_id: int) -> None:
+        p1_user = await self.session.get(User, player1.id)
+        p2_user = await self.session.get(User, player2.id)
 
         if not p1_user or not p2_user:
             return
 
-        if game.winner_id == p1_user.id:
-            winner, loser = p1_user, p2_user
-            p1_won = True
-        else:
-            winner, loser = p2_user, p1_user
-            p1_won = False
+        winner, loser = (p1_user, p2_user) if winner_id == p1_user.id else (p2_user, p1_user)
 
         K = 32
         expected_winner = 1 / (1 + 10 ** ((loser.elo_rating - winner.elo_rating) / 400))
@@ -253,15 +172,9 @@ class PvPGameRepository(BaseRepository[PvPGame]):
 
         winner.elo_rating += points
         loser.elo_rating -= points
-        player1 = PlayerState(**dataclasses.asdict(game.player1))
-        player2 = PlayerState(**dataclasses.asdict(game.player2))
-        if p1_won:
+        if winner_id == player1.id:
             player1.elo += points
             player2.elo -= points
-            game.player1 = player1
-            game.player2 = player2
         else:
             player2.elo += points
             player1.elo -= points
-            game.player1 = player1
-            game.player2 = player2

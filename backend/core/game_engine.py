@@ -49,3 +49,16 @@ class MasterMindGame:
         self.history.append(GuessRecord(guess, exact, wrong_pos))
 
         return exact, wrong_pos, is_winner
+
+    def generate_random_guess(self, max_attempts: int = 100) -> str:
+        for _ in range(max_attempts):
+            guess = "".join(str(d) for d in random.choices(range(10), k=self.num_digits))
+            if guess != self.secret:
+                return guess
+        return "0000"
+
+    def apply_free_guess(self) -> None:
+        random_guess = self.generate_random_guess()
+        exact, wrong_pos = self.evaluate_guess(random_guess)
+        self.history.append(GuessRecord(random_guess, exact, wrong_pos))
+        self.attempts += 1

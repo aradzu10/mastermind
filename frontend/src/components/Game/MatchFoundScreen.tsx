@@ -22,14 +22,18 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
       ? `${game.opponent_name} 🤖`
       : game.opponent_name || "Opponent";
 
+  const goesFirst = game.current_turn === game.self_id;
+  const turnMessage = goesFirst ? "You Go First!" : "You Go Second!";
+  const freeGuessMessage = goesFirst
+    ? "Your opponent got a free random guess"
+    : "Don't worry, you will get a free random guess";
+
   return (
-    // Outer container: overflow-hidden here prevents the window scrollbar when swords get huge
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 overflow-hidden">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        // Card: Removed overflow-hidden so swords can pop out visually
         className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center flex flex-col items-center"
       >
         <motion.h1
@@ -46,7 +50,7 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3, duration: 0.3 }}
-          className="w-full"
+          className="w-full mb-4"
         >
           <p className="text-2xl font-bold text-gray-800">{opponentName}</p>
           {game.opponent_elo && (
@@ -54,22 +58,24 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
           )}
         </motion.div>
 
-        {/* Animated Swords Container
-           1. relative: Keeps it in the flow (reserves space between texts).
-           2. z-50: Ensures when it scales up, it covers the text/card.
-           3. my-6: Adds a little breathing room.
+        {/* CENTERPIECE CONTAINER 
+           Holds both Sword and Banner in the same coordinate space.
         */}
-        <div className="relative z-50 my-6">
+        <div className="relative flex items-center justify-center w-full my-8 h-32">
+          
+          {/* 1. SWORDS (Layer 0) 
+             Positioned relative so they take up space, but z-0 puts them behind the banner.
+          */}
           <motion.div
-            className="text-8xl"
+            className="relative z-0 text-8xl"
             initial={{ rotate: 0, scale: 1 }}
             animate={{
-              rotate: [0, 360, 360, 360],
+              rotate: [0, 720, 720, 720], // 720 degrees = 2 full rounds
               scale: [1, 1, 3, 1],
             }}
             transition={{
-              duration: 1.5,
-              times: [0, 0.15, 0.85, 1],
+              duration: 3, // Slower duration
+              times: [0, 0.2, 0.8, 1], // Adjusts when the spin/scale happens
               ease: "easeInOut",
             }}
             onAnimationComplete={() => {
@@ -80,6 +86,26 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
           >
             ⚔️
           </motion.div>
+
+          {/* 2. BANNER (Layer 1)
+             Absolute positioning centers it perfectly ON TOP of the swords.
+             z-50 ensures it stays on top even when swords scale up.
+          */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+            className="absolute z-50 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-[90%]"
+          >
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg shadow-lg bg-opacity-90 backdrop-blur-sm">
+              <p className="text-xl font-bold text-center whitespace-nowrap">
+                {turnMessage}
+              </p>
+              <p className="text-xs text-center opacity-90 mt-1">
+                {freeGuessMessage}
+              </p>
+            </div>
+          </motion.div>
         </div>
 
         {/* Self Info */}
@@ -87,7 +113,7 @@ export function MatchFoundScreen({ game, onComplete }: MatchFoundScreenProps) {
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3, duration: 0.3 }}
-          className="w-full"
+          className="w-full mt-4"
         >
           <p className="text-2xl font-bold text-gray-800">{game.self_name}</p>
           {game.self_elo && (

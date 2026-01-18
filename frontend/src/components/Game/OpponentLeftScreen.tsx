@@ -153,7 +153,7 @@ export function OpponentLeftScreen({ game, onExit }: OpponentLeftScreenProps) {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 2.5 }}
+                transition={{ delay: 1.7 }}
                 className="mt-4 text-center"
               >
                 <span className="text-sm font-semibold text-green-600">

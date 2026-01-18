@@ -1,10 +1,12 @@
+import dataclasses
+import random
 from typing import Literal, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.ai import get_ai_player
 from backend.core.game_engine import GuessRecord, MasterMindGame
-from backend.db.models.game import Game
+from backend.db.models.game import Game, PlayerState
 from backend.db.models.user import User
 from backend.db.repositories.game_repository import GameRepository, PvPGameRepository, SingleGameRepository
 from backend.db.repositories.user_repository import UserRepository
@@ -16,6 +18,24 @@ class GameService:
         self.game_repo = GameRepository(session)
         self.pvp_repo = PvPGameRepository(session)
         self.user_repo = UserRepository(session)
+
+    def _create_player(self, user: User | None, secret: str) -> PlayerState:
+        if user is None:
+            user = User(id=None, display_name=None, elo_rating=None)
+        return PlayerState(
+            id=user.id,  # type: ignore
+            name=user.display_name,  # type: ignore
+            secret=secret,
+            guesses=[],
+            elo=user.elo_rating,  # type: ignore
+        )
+
+    def _apply_free_guess(self, player: PlayerState) -> PlayerState:
+        mastermind = MasterMindGame(player_secret=player.secret)
+        mastermind.apply_free_guess()
+        free_guess = mastermind.history[0]
+        player.guesses += [{"guess": free_guess.guess, "exact": free_guess.exact, "wrong_pos": free_guess.wrong_pos}]
+        return player
 
     async def create_game(
         self,
@@ -37,29 +57,49 @@ class GameService:
 
     async def _create_single_game(self, user: User) -> Game:
         game_engine = MasterMindGame()
-        return await self.single_repo.create(user, game_engine.secret)
+        player = self._create_player(user, game_engine.secret)
+        return await self.single_repo.create(player)
 
     async def _create_or_join_pvp_game(self, user: User, player_secret: str | None) -> Game:
         game_engine = MasterMindGame(player_secret)
         available_game = await self.pvp_repo.get_waiting_games()
         if available_game:
-            # Join existing game
-            game = await self.pvp_repo.join_game(available_game[0], user, game_engine.secret)
-            return game
-        return await self.pvp_repo.create(user, game_engine.secret)
+            # Join existing game - player1 gets the joining user's secret, player2 is the new player
+            game = available_game[0]
+            player1 = PlayerState(**dataclasses.asdict(game.player1))
+            player1.secret = game_engine.secret
+            player2 = self._create_player(user, game.player2.secret)
+
+            current_turn = random.choice([player1.id, player2.id])
+
+            if current_turn == player1.id:
+                player2 = self._apply_free_guess(player2)
+            else:
+                player1 = self._apply_free_guess(player1)
+            return await self.pvp_repo.join_game(available_game[0], player1, player2, current_turn)
+
+        # Create new waiting game
+        player1 = self._create_player(user, secret="")
+        player2 = self._create_player(None, secret=game_engine.secret)
+        return await self.pvp_repo.create(player1, player2)
 
     async def _create_ai_game(self, user: User, ai_difficulty: str, player_secret: str | None) -> Game:
         player_game = MasterMindGame()
         ai_game = MasterMindGame(player_secret)
         ai_player = get_ai_player(ai_difficulty, ai_game)
+        ai_user = ai_player.user()
 
-        return await self.pvp_repo.create_ai_game(
-            user,
-            player_game.secret,
-            ai_player.user(),
-            ai_player.master_mind_game.secret,
-            ai_difficulty=ai_difficulty,
-        )
+        player1 = self._create_player(user, player_game.secret)
+        player2 = self._create_player(ai_user, ai_game.secret)
+
+        current_turn = random.choice([player1.id, player2.id])
+
+        if current_turn == player1.id:
+            player2 = self._apply_free_guess(player2)
+        else:
+            player1 = self._apply_free_guess(player1)
+
+        return await self.pvp_repo.create_ai_game(player1, player2, ai_difficulty, current_turn)
 
     async def get_game(self, game_id: int, user: User) -> Game:
         game = await self.game_repo.find_by_id(game_id)
@@ -85,13 +125,16 @@ class GameService:
                 raise ValueError("It's not your turn")
 
         if game.game_mode == "single":
-            player = game.player
+            player = PlayerState(**dataclasses.asdict(game.player))
+            opponent = self._create_player(None, secret=None)
             repo = self.single_repo
         elif game.player1.id == user.id:
-            player = game.player1
+            player = PlayerState(**dataclasses.asdict(game.player1))
+            opponent = PlayerState(**dataclasses.asdict(game.player2))
             repo = self.pvp_repo
         else:
-            player = game.player2
+            player = PlayerState(**dataclasses.asdict(game.player2))
+            opponent = PlayerState(**dataclasses.asdict(game.player1))
             repo = self.pvp_repo
 
         history = [GuessRecord(**guess) for guess in player.guesses or []]
@@ -101,7 +144,11 @@ class GameService:
             raise ValueError("Invalid guess format")
 
         exact, wrong_pos, is_winner = mastermind.make_guess(guess_str)
-        game = await repo.make_guess(game, user, guess_str, exact, wrong_pos, is_winner)
+        player.guesses.append({"guess": guess_str, "exact": exact, "wrong_pos": wrong_pos})
+        winner_id = player.id if is_winner else None
+        if game.game_mode != "single" and game.player2.id == user.id:
+            player, opponent = opponent, player
+        game = await repo.make_guess(game, player, opponent, winner_id)
 
         return game
 
